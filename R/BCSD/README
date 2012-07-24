@@ -1,0 +1,4 @@
+R BCSD (July 24, 2012)
+Alex Cannon (acannon@uvic.ca)
+R libraries: ncdf4, RNetCDF, doMC, fields, PCICt
+Utilities: cdo

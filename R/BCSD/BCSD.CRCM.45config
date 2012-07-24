@@ -1,0 +1,66 @@
+##******************************************************************************
+# Bias Corrected Spatial Disaggregation (BCSD) downscaling algorithm
+# Alex Cannon (acannon@uvic.ca)
+##******************************************************************************
+# Note: set tas(min, max).nc.file and tas(min, max).var to the appropriate
+# monthly average temperature values if the GCM lacks separate monthly
+# min./max. temperature outputs
+################################################################################
+
+nc.obs.file <- 'inputs/obs/forcings_new_symap_BC_22AUG2011_1950-2006.nc'
+
+pr.nc.file <- '../wcerr1l/DATA/wcerr1l_p1pcp_daily.nc'
+pr.var <- 'pr'
+
+tasmax.nc.file <- '../wcerr1l/DATA/wcerr1l_p1stmx_daily.nc'
+tasmax.var <- 'tasmax'
+
+tasmin.nc.file <- '../wcerr1l/DATA/wcerr1l_p1stmn_daily.nc'
+tasmin.var <- 'tasmin'
+
+wnd.nc.file <- '../wcerr1l/DATA/wcerr1l_p1swmx_daily.nc'
+wnd.var <- 'wind'
+
+#uwnd.nc.file <- '../wcerr1l/DATA/wcerr1l_p1pcp_daily.nc'
+#uwnd.var <- 'ua'
+
+#vwnd.nc.file <- '../wcerr1l/DATA/wcerr1l_p1pcp_daily.nc'
+#vwnd.var <- 'va'
+
+template.file <- 'inputs/obs/template.nc'
+output.dir <- 'outputs/'
+output.file <- 'bcsd'
+output.suffix <- 'wcerr1l_crcm45_tavg_1958-2000'
+output.nc.time.units <- 'days since 1958-01-01 00:00:00'
+output.nc.title <- 'Bias Correction Spatial Disaggregation (BCSD) downscaling from wcerr1l CRCM45'
+output.nc.institution <- 'Pacific Climate Impacts Consortium (PCIC), Victoria, BC, www.pacificclimate.org'
+output.nc.source <- ''
+output.nc.input_data <- 'wcerr1l CRCM45'
+output.nc.reference <- 'Calibration from 1958-2000'
+output.nc.project_id <- ''
+output.nc.experiment_id <- 'wcerr1l.45'
+output.nc.version <- ''
+output.nc.version_comment <- 'Note: disaggregation based on average temperature'
+output.nc.contact1 <- 'Alex Cannon'
+output.nc.contact2 <- 'acannon@uvic.ca'
+output.nc.contact3 <- ''
+output.nc.history <- ''
+
+clim.years <- 1958:1983
+resample.years <- 1958:1983
+bc.years <- 1958:1983
+detrend.pr <- FALSE
+detrend.tx <- TRUE
+detrend.tn <- TRUE
+#detrend.wind <- FALSE
+
+pr.scale.max <- 3
+pr.prop.max <- 2
+pr.nwet.min <- 2
+shift.tavg <- TRUE
+pr.overflow <- 1500
+
+random.seed <- 1
+mc.cores <- 4
+
+##******************************************************************************
