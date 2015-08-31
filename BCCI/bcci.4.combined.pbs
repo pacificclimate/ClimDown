@@ -1,0 +1,29 @@
+#!/bin/sh
+# Script for running serial program, diffuse.
+
+#PBS -l walltime=144:00:00
+#PBS -l mem=23000mb
+#PBS -r n
+
+ulimit -v 22900000
+
+gcm=hadcm3
+rcm=mm5i
+      
+cd /home/ssobie/stat.downscaling/code/BCCI/pr/
+echo "Current working directory is `pwd`"
+
+/global/software/R-3.0.1-2-rh6/bin/R CMD BATCH "--args gcm='${gcm}' rcm='${rcm}'" BCCI.4.precip.bias_correct_dqm.R "bcci.4.precip.${gcm}-${rcm}.out" 
+echo "Program BCCI 4 finished with exit code $? at: `date`"
+
+cd /home/ssobie/stat.downscaling/code/BCCI/tasmax/
+echo "Current working directory is `pwd`"
+
+/global/software/R-3.0.1-2-rh6/bin/R CMD BATCH "--args gcm='${gcm}' rcm='${rcm}'" BCCI.4.tasmax.bias_correct_dqm.R "bcci.4.tasmax.${gcm}-${rcm}.out" 
+echo "Program BCCI 4 tasmax finished with exit code $? at: `date`"
+
+cd /home/ssobie/stat.downscaling/code/BCCI/tasmin/
+echo "Current working directory is `pwd`"
+
+/global/software/R-3.0.1-2-rh6/bin/R CMD BATCH "--args gcm='${gcm}' rcm='${rcm}'" BCCI.4.tasmin.bias_correct_dqm.R "bcci.4.tasmin.${gcm}-${rcm}.out" 
+echo "Program BCCI 4 tasmin finished with exit code $? at: `date`"

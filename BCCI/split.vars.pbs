@@ -1,0 +1,17 @@
+#!/bin/sh
+# Script for running serial program, diffuse.
+
+#PBS -l walltime=72:00:00
+#PBS -l mem=10000mb
+#PBS -r n
+
+ulimit -S -v 9000000
+
+
+cd /global/scratch/ssobie/stat.downscaling/BCCI/ccsm.crcm/
+
+echo "Current working directory is `pwd`"
+
+ncks -x -v tasmax,tasmin test.precip.nc test.precip.only.nc
+
+
