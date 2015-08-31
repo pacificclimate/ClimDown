@@ -1,0 +1,19 @@
+#!/bin/sh
+# Script for running serial program, diffuse.
+
+#PBS -l walltime=72:00:00
+#PBS -l mem=21000mb
+#PBS -r n
+
+ulimit -S -v 20000000
+
+gcm=BNU-ESM
+rcp=rcp26
+run=r1i1p1
+
+cd /home/ssobie/stat.downscaling/code/QPQM/BCCA/tasmax/
+echo "Current working directory is `pwd`"
+
+/global/software/R-3.0.2/bin/R CMD BATCH "--args gcm='${gcm}' rcp='${rcp}' run='${run}'" BCCA.4.maurer_constructed_analogue_tasmax.R "./out.files/bcca.4.bias.correct.tasmax.${gcm}.${rcp}.${run}.out"
+echo "Program BCCA 4 Bias Correct finished with exit code $? at: `date`"
+
