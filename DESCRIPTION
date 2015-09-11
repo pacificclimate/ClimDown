@@ -1,0 +1,22 @@
+Package: ClimDown
+Version: 0.0.1
+Date: 2015-??-??
+Title: PCIC's Daily Climate Downscaling Library
+Authors@R: c(person("Alex Cannon", role = "aut", email = "acannon@uvic.ca"),
+	     person("James Hiebert", role = c("aut", "cre"), email = "hiebert@uvic.ca),
+	     person("Arelia Werner", role = "aut", email = "wernera@uvic.ca"),
+	     person("Steven Sobie", role = "aut", email = "ssobie@uvic.ca"))
+Depends:
+    R
+Imports:
+Suggests:
+Description: PCIC's suite of routines for downscaling coarse
+    scale global climate model (GCM) output to a fine spatial
+    resolution. Includes Bias-Corrected Spatial Downscaling (BCDS),
+    Bias-Correction Constructed Analogues (BCCA), Bias Correction/Climate
+    Imprint (BCCI), and Bias Correction/Constructed Analogues with
+    Quantilemapping reordering (BCCAQ).
+License: GPL-3
+URL: http://www.r-project.org
+LazyData: yes
+BugReports: https://github.com/pacificclimate/ClimDown
