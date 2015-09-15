@@ -6,13 +6,12 @@
 # Bias correct daily GCM values using detrended quantile mapping algorithm
 ##******************************************************************************
 
-ptm <- proc.time()
-print('Starting')
-
-code.dir <- '/home/ssobie/stat.downscaling/code/QPQM/BCCA/'
-
-source(paste(code.dir,'DQM.R',sep=''))
 library(ncdf4)
+
+ptm <- proc.time()
+print('Starting step 3')
+
+source('../DQM.R')
 
 args <- commandArgs(trailingOnly=TRUE)
 for(i in 1:length(args)){
