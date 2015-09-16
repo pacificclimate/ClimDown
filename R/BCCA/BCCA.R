@@ -1,130 +1,97 @@
 ##******************************************************************************
 # Bias Corrected Constructed Analogue (BCCA) downscaling algorithm
-# Alex Cannon (acannon@uvic.ca)
-# *All wind related lines of code - commented out by Arelia Werner (wernera@uvic.ca)
-##******************************************************************************
-# Read fine-scale grid and spatially aggregate to GCM grid
-##******************************************************************************
+# Based loosely off of code by Alex Cannon <acannon@uvic.ca>
+# Rewritten by James Hiebert <hiebert@uvic.ca>
 
 library(ncdf4)
-source('../netcdf.calendar.R')
-source('../bisect.R')
+code.dir <- Sys.getenv('CODE_DIR')
+source(paste(code.dir, 'bisect.R', sep='/'))
+source(paste(code.dir, 'netcdf.calendar.R', sep='/'))
 
-ptm <- proc.time()
-
-print("Starting step 1")
-
-# "--args gcm='${gcm}' rcp='${rcp}' run='${run}'"
+# "--args gcm.file='${gcm.file}' obs.file='${obs.file}' varid='${varid}'"
 args <- commandArgs(trailingOnly=TRUE)
 for(i in 1:length(args)){
     eval(parse(text=args[[i]]))
 }
 
-config <- 'BCCA.set.config'
-print(readLines(config))
-source(config)
+# Input is a factor of which maps fine-scale obs cells to large-scale gcm cells
+# The factor should be of length x * y
+# and a 3d array of obs (x, y, time)
+aggregate.obs <- function(cell.factor, obs) {
+  apply(obs, 3, function(x) tapply(x, cell.factor, mean, trim=0.1, na.rm=TRUE))
+}
 
-nc.obs <- nc_open(nc.obs.file)
-nc.gcm <- nc_open(pr.nc.file)
-nc.tasmax.gcm <- nc_open(tasmax.nc.file)
-nc.tasmin.gcm <- nc_open(tasmin.nc.file)
+# Input cell indicies mapping obs grid to GCM grid
+# and a 3d array of obs (x, y, time)
+# Output is 3d array, gcmx x gcm y x time
+aggregate.obs.to.gcm.grid <- function(xi, yi, xn, yn, obs) {
+  cell.number <- xi * max(yi) + yi
+  cell.factor <- factor(cell.number, unique(as.vector(cell.number)))
+  # apply preserving time (dim 3)
+  # so for each time step, aggregate (take the mean) according to the cell map
+  rv <- aggregate.obs(cell.factor, obs)
+  ti <- dim(obs)[3]
+  dim(rv) <- c(xn, yn, ti)
+  return(rv)
+}
 
-##******************************************************************************
-# Read fine-scale and GCM grid dimensions
+# Takes a vector length and chunk size
+# returns a list of (start, stop, length)
+chunk.indices <- function(total.size, chunk.size) {
+  lapply(
+    split(1:total.size, ceiling(1:total.size / chunk.size)),
+    function(x) {c('start'=min(x), 'stop'=max(x), 'length'=length(x))}
+    )
+}
 
-obs.lon <- ncvar_get(nc.obs, 'lon')
-obs.lat <- ncvar_get(nc.obs, 'lat')
-n.lon <- length(obs.lon)
-n.lat <- length(obs.lat)
+optimal.chuck.size <- function(n.elements, max.GB=10) {
+  # 8 byte numerics
+  floor(max.GB * 2 ** 30 / 8 / n.elements)
+}
 
-obs.lats <- matrix(obs.lat, nrow=n.lon, ncol=n.lat, byrow=TRUE)
-obs.lons <- matrix(obs.lon, nrow=n.lon, ncol=n.lat)
-obs.time <- netcdf.calendar(nc.obs)
-
-gcm.lon <- ncvar_get(nc.gcm, 'lon')-360
-gcm.lat <- ncvar_get(nc.gcm, 'lat')
-gcm.lats <- matrix(gcm.lat, ncol=length(gcm.lat), nrow=length(gcm.lon),
-                   byrow=TRUE)
-gcm.lons <- matrix(gcm.lon, ncol=length(gcm.lat), nrow=length(gcm.lon))
-gcm.lons.lats <- cbind(c(gcm.lons), c(gcm.lats))
-
-pr.gcm.time <- netcdf.calendar(nc.gcm)
-tasmax.gcm.time <- netcdf.calendar(nc.tasmax.gcm)
-tasmin.gcm.time <- netcdf.calendar(nc.tasmin.gcm)
-
-pr.raw.time <- ncvar_get(nc.gcm,'time')
-tasmax.raw.time <- ncvar_get(nc.tasmax.gcm,'time')
-tasmin.raw.time <- ncvar_get(nc.tasmin.gcm,'time')
-
-nc_close(nc.gcm)
-nc_close(nc.tasmax.gcm)
-nc_close(nc.tasmin.gcm)
-
-################################################################################
-# Figure out which GCM grid boxes are associated with each fine-scale grid point
-
-grid.mapping <- regrid.coarse.to.fine(gcm.lats, gcm.lons, obs.lats, obs.lons)
-
-print('Step 1 Elapsed Time')
-print(proc.time() - ptm)
-
-##******************************************************************************
-# Bias Corrected Constructed Analogues (BCCA) downscaling algorithm
-# Alex Cannon (acannon@uvic.ca)
-# *All wind related lines of code - commented out by Arelia Werner (wernera@uvic.ca)
 ##******************************************************************************
 # Read fine-scale grid and spatially aggregate to GCM grid
 ##******************************************************************************
+create.aggregates <- function(obs.file, gcm.file, varid) {
 
-print('Starting step 2')
-ptm <- proc.time()
+  # Read fine-scale and GCM grid dimensions
+  nc.obs <- nc_open(obs.file)
+  nc.gcm <- nc_open(gcm.file)
+  obs.lons <- ncvar_get(nc.obs, 'lon')
+  obs.lats <- ncvar_get(nc.obs, 'lat')
+  gcm.lons <- ncvar_get(nc.gcm, 'lon')-360
+  gcm.lats <- ncvar_get(nc.gcm, 'lat')
+  obs.time <- netcdf.calendar(nc.obs)
 
-#gridpoints <- sort(unique(nn))
-cat('\n')
+  # Figure out which GCM grid boxes are associated with each fine-scale grid point
+  grid.mapping <- regrid.coarse.to.fine(gcm.lats, gcm.lons, obs.lats, obs.lons)
+  xi <- grid.mapping$xi
+  yi <- grid.mapping$yi
 
-################################################################################
-# Spatially aggregate the fine-scale data to the GCM grid
+  xn <- length(unique(as.vector(xi)))
+  yn <- length(unique(as.vector(yi)))
+  aggregates <- array(dim=c(length(gcm.lons), length(gcm.lats), length(obs.time)))
 
-aggregate <- matrix(NA, nrow=nrow(obs.time), ncol=length(gcm.lons))
-
-i.starts <- sapply(split(seq_along(obs.time[,1]), obs.time[,1]), min)
-i.lengths <- sapply(split(seq_along(obs.time[,1]), obs.time[,1]), length)
-
-
-all.agg.fxn <- function(gridpoints,nn,var.obs) {
-  all.agg <- matrix(NA,nrow=dim(var.obs)[2],ncol=length(gridpoints))
-  for (j in 1:length(gridpoints)) {
-    point <- gridpoints[j]
-    all.agg[,j] <- apply(var.obs[nn==point,,drop=FALSE], 2, mean, trim=0.1, na.rm=TRUE)
-  }
-  return(all.agg)
-}
-
-
-
-for (varid in c('pr', 'tasmax', 'tasmin')) {
-    for(i in seq_along(i.starts)){
-        cat(obs.time[i.starts[i],], '\n')
-        obs <- ncvar_get(nc.obs, varid=varid, start=c(1, 1, i.starts[i]),
-                         count=c(n.lon, n.lat, i.lengths[i]))
-        dim(obs) <- c(prod(dim(obs)[1:2]), dim(obs)[3])
-        agg <- matrix(NA, nrow=i.lengths[i], ncol=length(gcm.lons))
-        all.agg <- all.agg.fxn(gridpoints,nn,obs)
-        agg[,gridpoints] <- all.agg
-        aggregate[i.starts[i]:(i.starts[i]+i.lengths[i]-1),] <- agg
-    }
-
-    save(aggregate, file=paste(output.dir, paste(varid, 'aggregate', sep='.'), output.suffix,
-                        '.RData', sep=''))
-    aggregate.one <- aggregate[1,]
-    save(aggregate.one, file=paste(output.dir, paste(varid, 'aggregate.one', sep='.'), output.suffix,
-                            '.RData', sep=''))
+  chunk.size <- optimal.chuck.size(length(obs.lons) * length(obs.lats))
+  
+  chunks <- chunk.indices(length(obs.time), chunk.size)
+  # Loop over chunks fo time
+  for (i in chunks) {
+    cat(i['start'], i['stop'], '\n')
+    obs <- ncvar_get(nc.obs, varid=varid, start=c(1, 1, i['start']), # get obs for one chunk
+                     count=c(-1, -1, i['length']))
+    agg <- aggregate.obs.to.gcm.grid(xi, yi, xn, yn, obs)
+    aggregates[min(xi):max(xi), min(yi):max(yi), i['start']:i['stop']] <- agg
     rm(obs)
-    rm(agg)
-    rm(all.agg)
-    rm(aggregate)
     gc()
+  }
+  aggregates
 }
+
+print('Starting spatial aggregation')
+ptm <- proc.time()
+aggregates <- create.aggregates(obs.file, gcm.file, varid)
+save(aggregates, file=paste(paste(varid, 'aggregate', 'RData', sep='.')))
 
 print('Elapsed time')
 print(proc.time() - ptm)
