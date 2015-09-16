@@ -1,7 +1,7 @@
 #!/bin/sh
 # Script for running serial program, diffuse.
 
-#PBS -l walltime=72:00:00
+#PBS -l walltime=2:00:00
 #PBS -l mem=10000mb
 #PBS -r n
 
@@ -11,10 +11,10 @@ gcm=BNU-ESM
 rcp=rcp26
 run=r1i1p1
 
-pushd ${CODE_DIR}
+pushd $PBS_O_WORKDIR
 echo "Current working directory is `pwd`"
 
 module load R
-R CMD BATCH "--args gcm='${gcm}' rcp='${rcp}' run='${run}'" BCCA..R "./out.files/bcca.${gcm}.${rcp}.${run}.out"
+R CMD BATCH "--args gcm='${gcm}' rcp='${rcp}' run='${run}'" BCCA.R "$HOME/ClimDown/output/bcca.${gcm}.${rcp}.${run}.out"
 echo "Program BCCA Set up finished with exit code $? at: `date`"
 

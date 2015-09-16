@@ -8,10 +8,7 @@
 
 library(ncdf4)
 source('../netcdf.calendar.R')
-
-config <- paste(code.dir,'BCCA.set.config',sep='')
-print(readLines(config))
-source(config)
+source('../bisect.R')
 
 ptm <- proc.time()
 
@@ -23,6 +20,9 @@ for(i in 1:length(args)){
     eval(parse(text=args[[i]]))
 }
 
+config <- 'BCCA.set.config'
+print(readLines(config))
+source(config)
 
 nc.obs <- nc_open(nc.obs.file)
 nc.gcm <- nc_open(pr.nc.file)
@@ -62,24 +62,8 @@ nc_close(nc.tasmin.gcm)
 
 ################################################################################
 # Figure out which GCM grid boxes are associated with each fine-scale grid point
-# Confine search to 10 deg. x 10 deg. neighbourhood
 
-dxy <- 10
-mdist <- function(x, y)
-    apply(abs(sweep(data.matrix(y), 2, data.matrix(x), '-')), 1, sum)
-nn <- list()
-for (i in seq_along(obs.lons)) {
-    if((i %% 500)==0) cat(i, '')
-    gcm.lims <- ((gcm.lons.lats[,1] >= (obs.lons[i]-dxy)) &
-                 (gcm.lons.lats[,1] <= (obs.lons[i]+dxy))) &
-                ((gcm.lons.lats[,2] >= (obs.lats[i]-dxy)) &
-                 (gcm.lons.lats[,2] <= (obs.lats[i]+dxy)))
-    gcm.lims <- which(gcm.lims)
-    nn.min <- which.min(mdist(c(obs.lons[i], obs.lats[i]),
-                        gcm.lons.lats[gcm.lims,]))
-    nn[[i]] <- gcm.lims[nn.min]
-}
-nn <- unlist(nn)
+grid.mapping <- regrid.coarse.to.fine(gcm.lats, gcm.lons, obs.lats, obs.lons)
 
 print('Step 1 Elapsed Time')
 print(proc.time() - ptm)
@@ -95,15 +79,13 @@ print(proc.time() - ptm)
 print('Starting step 2')
 ptm <- proc.time()
 
-gridpoints <- sort(unique(nn))
+#gridpoints <- sort(unique(nn))
 cat('\n')
 
 ################################################################################
 # Spatially aggregate the fine-scale data to the GCM grid
 
-pr.aggregate <- tasmax.aggregate <- tasmin.aggregate <-
-      matrix(NA, nrow=nrow(obs.time), ncol=length(gcm.lons))
-        #  wind.aggregate <-
+aggregate <- matrix(NA, nrow=nrow(obs.time), ncol=length(gcm.lons))
 
 i.starts <- sapply(split(seq_along(obs.time[,1]), obs.time[,1]), min)
 i.lengths <- sapply(split(seq_along(obs.time[,1]), obs.time[,1]), length)
@@ -117,6 +99,7 @@ all.agg.fxn <- function(gridpoints,nn,var.obs) {
   }
   return(all.agg)
 }
+
 
 
 for (varid in c('pr', 'tasmax', 'tasmin')) {
