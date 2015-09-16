@@ -29,8 +29,8 @@ regrid.one.dim <- function(coarse.points, fine.points) {
 ## is a huge optimization, making the run time x + y instead of x * y) and
 ## then reconstruct the indices to create a full grid
 regrid.coarse.to.fine <- function(coarse.lats, coarse.lons, fine.lats, fine.lons) {
-    xi <- regrid.one.dim(gcm.lon, obs.lon)
-    yi <- regrid.one.dim(gcm.lat, obs.lat)
+    xi <- regrid.one.dim(coarse.lons, fine.lons)
+    yi <- regrid.one.dim(coarse.lats, fine.lats)
     ## Two dimensional grid of indices
     xi <- matrix(xi, ncol=length(fine.lats), nrow=length(fine.lons), byrow=F)
     yi <- matrix(yi, ncol=length(fine.lats), nrow=length(fine.lons), byrow=T)
