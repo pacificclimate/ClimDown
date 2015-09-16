@@ -3,13 +3,13 @@
 # Alex Cannon (acannon@uvic.ca)
 ##******************************************************************************
 
+library(ncdf4)
+library(PCICt)
+library(RNetCDF)
 
 netcdf.calendar <-
 function(nc, time.variable='time')
 {
-    library(ncdf4)
-    library(PCICt)
-    library(RNetCDF)
     close.nc <- FALSE
     if(class(nc)=='character'){
         nc <- nc_open(nc)
