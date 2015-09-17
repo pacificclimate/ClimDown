@@ -45,7 +45,7 @@ chunk.indices <- function(total.size, chunk.size) {
     )
 }
 
-optimal.chuck.size <- function(n.elements, max.GB=10) {
+optimal.chunk.size <- function(n.elements, max.GB=10) {
   # 8 byte numerics
   floor(max.GB * 2 ** 30 / 8 / n.elements)
 }
@@ -73,7 +73,7 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   yn <- length(unique(as.vector(yi)))
   aggregates <- array(dim=c(length(gcm.lons), length(gcm.lats), length(obs.time)))
 
-  chunk.size <- optimal.chuck.size(length(obs.lons) * length(obs.lats))
+  chunk.size <- optimal.chunk.size(length(obs.lons) * length(obs.lats))
 
   chunks <- chunk.indices(nrow(obs.time), chunk.size)
   # Loop over chunks fo time
