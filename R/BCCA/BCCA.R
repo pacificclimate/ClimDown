@@ -73,8 +73,8 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   aggregates <- array(dim=c(length(gcm.lons), length(gcm.lats), length(obs.time)))
 
   chunk.size <- optimal.chuck.size(length(obs.lons) * length(obs.lats))
-  
-  chunks <- chunk.indices(length(obs.time), chunk.size)
+
+  chunks <- chunk.indices(nrow(obs.time), chunk.size)
   # Loop over chunks fo time
   for (i in chunks) {
     cat(i['start'], i['stop'], '\n')
