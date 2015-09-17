@@ -8,13 +8,8 @@ library(PCICt)
 library(RNetCDF)
 
 netcdf.calendar <-
-function(nc, time.variable='time')
+function(nc, time.variable='time', pcict=FALSE)
 {
-    close.nc <- FALSE
-    if(class(nc)=='character'){
-        nc <- nc_open(nc)
-        close.nc <- TRUE
-    }
     time.calendar <- ncatt_get(nc, time.variable, 'calendar')$value
     if(time.calendar=='noleap') time.calendar <- '365_day'
     if(time.calendar==0) time.calendar <- 'gregorian'
@@ -36,6 +31,9 @@ function(nc, time.variable='time')
                            as.numeric(format(time.values, '%H')))
         colnames(time.ymdh) <- c('year', 'month', 'day', 'hour')
     }
-    if(close.nc) nc_close(nc)
-    time.ymdh
+    if (pcict) {
+        time.values
+    } else {
+        time.ymdh
+    }
 }
