@@ -4,6 +4,7 @@
 # Rewritten by James Hiebert <hiebert@uvic.ca>
 
 library(ncdf4)
+code.dir <- Sys.getenv('CODE_DIR')
 source(paste(code.dir,'DQM.R',sep=''))
 source(paste(code.dir,'netcdf.calendar.R',sep=''))
 
@@ -13,8 +14,8 @@ for(i in 1:length(args)){
     eval(parse(text=args[[i]]))
 }
 
-na.mask <- function(grid) {
-    which(!is.na(grid))
+na.masked <- function(grid) {
+    which(!is.na(grid), arr.ind=TRUE)
 }
 
 ##******************************************************************************
@@ -36,26 +37,24 @@ bias.correct.dqm <- function(gcm, aggd.obs,
     tn <- as.PCICt(historical.end, attr(obs.time, 'cal'))
     hist.period.obs <- obs.time >= t0 & obs.time <= tn
 
-    points <- na.mask(aggd.obs[,,1])
+    points <- na.masked(aggd.obs[,,1])
 
-    for(i in seq_along(points)) {
-        point <- points[i]
-        if (all(is.na(gcm[point,]))) {
-            gcm[point,] <- rep(NA,dim(gcm)[3])
+    mapply(function(x, y) {
+        if (all(is.na(gcm[x,y,]))) {
+            rep(NA,dim(gcm)[3])
         } else {
-            dqm.tmp <- mnDQM(obs.h=aggd.obs[point, hist.period],
-                             gcm.h=gcm[point, hist.period],
-                             gcm.f=gcm[point, future.period],
+            dqm.tmp <- mnDQM(obs.h=aggd.obs[x,y, hist.period.obs],
+                             gcm.h=gcm[x,y, hist.period.gcm],
+                             gcm.f=gcm[x,y, future.period],
                              months.obs.h=as.numeric(format(obs.time[hist.period.obs], '%m')),
                              months.gcm.h=as.numeric(format(gcm.time[hist.period.gcm], '%m')),
                              months.gcm.f=as.numeric(format(gcm.time[future.period], '%m')),
-                             gcm.p=gcm[point, prehist.period],
+                             gcm.p=gcm[x,y, prehist.period],
                              months.gcm.p=as.numeric(format(gcm.time[prehist.period], '%m')),
-                             ratio=TRUE, detrend=detrend, n.max=NULL)
-            gcm[,point] <- c(dqm.tmp$g.p.bc, dqm.tmp$g.h.bc, dqm.tmp$g.f.bc)
+                             ratio=FALSE, detrend=detrend, n.max=NULL) # FIXME: ratio and detrend are based on variable
+            c(dqm.tmp$g.p.bc, dqm.tmp$g.h.bc, dqm.tmp$g.f.bc)
         }
-    }
-    gcm
+    }, points[,'row'], points[,'col'])
 }
 
 # NetCDF I/O wrapper for bias.correct.dqm()
@@ -83,7 +82,7 @@ bias.correct.dqm.netcdf <- function(gcm.nc, obs.nc, varname='tasmax') {
 ptm <- proc.time()
 print('Starting')
 
-gcm <- bias.correct.dqm.netcdf(gcm.file, obs.file, varname)
+gcm <- bias.correct.dqm.netcdf(gcm.file, obs.file, varid)
 save(gcm, file=paste('gcm_bc.Rdata'))
 
 print('Elapsed time')
