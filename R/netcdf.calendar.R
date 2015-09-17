@@ -11,15 +11,23 @@ netcdf.calendar <-
 function(nc, time.variable='time', pcict=FALSE)
 {
     time.calendar <- ncatt_get(nc, time.variable, 'calendar')$value
+    time.units <- ncatt_get(nc, time.variable, 'units')$value
+    time.values <- ncvar_get(nc, time.variable)
+
+    origin.pcict <- as.PCICt(strsplit(time.units, ' ')[[1]][3],
+                             cal=time.calendar)
+
     if(time.calendar=='noleap') time.calendar <- '365_day'
     if(time.calendar==0) time.calendar <- 'gregorian'
     if(time.calendar=='standard') time.calendar <- 'gregorian'
     if(grepl('gregorian', time.calendar)){
-        time.ymdh <- utcal.nc(ncatt_get(nc, time.variable, 'units')$value,
-                              ncvar_get(nc, time.variable))[,1:4]
+        time.ymdh <- utcal.nc(time.units,
+                              time.values)[,1:4]
+
+        if(grepl('days', time.units)) time.values <- time.values*86400
+        if(grepl('hours', time.units)) time.values <- time.values*3600
+        time.values <- origin.pcict + time.values
     } else{
-        time.units <- ncatt_get(nc, time.variable, 'units')$value
-        time.values <- ncvar_get(nc, time.variable)
         if(grepl('days', time.units)) time.values <- time.values*86400
         if(grepl('hours', time.units)) time.values <- time.values*3600
         origin.pcict <- as.PCICt(strsplit(time.units, ' ')[[1]][3],

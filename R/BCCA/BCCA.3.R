@@ -23,14 +23,17 @@ na.mask <- function(grid) {
 bias.correct.dqm <- function(gcm, aggd.obs,
                              obs.time,
                              gcm.time,
-                             historical.start=as.PCICt('1951-1-1', 'gregorian'),
-                             historical.end=as.PCICt('2005-12-31', 'gregorian'),
+                             historical.start='1951-1-1',
+                             historical.end='2005-12-31',
                              detrend=FALSE) {
-    t0 <- historical.start
-    tn <- historical.end
+    t0 <- as.PCICt(historical.start, attr(gcm.time, 'cal'))
+    tn <- as.PCICt(historical.end, attr(gcm.time, 'cal'))
     prehist.period <- gcm.time < t0
     future.period <- gcm.time > tn
     hist.period.gcm <- ! (prehist.period | future.period)
+
+    t0 <- as.PCICt(historical.start, attr(obs.time, 'cal'))
+    tn <- as.PCICt(historical.end, attr(obs.time, 'cal'))
     hist.period.obs <- obs.time >= t0 & obs.time <= tn
 
     points <- na.mask(aggd.obs[,,1])
@@ -59,8 +62,8 @@ bias.correct.dqm <- function(gcm, aggd.obs,
 bias.correct.dqm.netcdf <- function(gcm.nc, obs.nc, varname='tasmax') {
     # Read in GCM data
     nc <- nc_open(gcm.nc)
-    gcm <- ncvar_get(nc, varname)-273.15 # FdIXME: This is tas, but make this call udunits
-    gcm.time <- netcdf.calendar(gcm.nc, 'time', pcict=TRUE)
+    gcm <- ncvar_get(nc, varname)-273.15 # FIXME: This is tas, but make this call udunits
+    gcm.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
     nc_close(nc)
     #gcm <- sweep(gcm, 2, na.mask, '*') # Pretty sure that this is unnecessary
     gcm <- round(gcm, 3) # FIXME: This depends on the variable
@@ -68,9 +71,10 @@ bias.correct.dqm.netcdf <- function(gcm.nc, obs.nc, varname='tasmax') {
     # Read the aggregated obs
     nc <- nc_open(obs.nc)
     #aggd.obs <- ncvar_get(nc, varname)
-    obs.time <- netcdf.calendar(obs.nc, 'time', pcict=TRUE)
+    obs.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
+    nc_close(nc)
     # FIXME: replace this w/ a call to create.aggregates()
-    load('tasmax.aggregates.Rdata')
+    load('tasmax.aggregate.RData')
     aggd.obs <- aggregates
 
     bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=FALSE)
