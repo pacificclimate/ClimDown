@@ -8,81 +8,84 @@
 ptm <- proc.time()
 print('Starting')
 
-code.dir <- '/home/ssobie/stat.downscaling/code/QPQM/BCCA/'
-
-source(paste(code.dir,'DQM.R',sep=''))
 library(ncdf4)
+code.dir <- Sys.getenv('CODE_DIR')
+source(paste(code.dir, 'netcdf.calendar.R', sep='/'))
 
+# "--args gcm.file='${gcm.file}' obs.file='${obs.file}' output.file='${output.file}' varid='${varid}'"
 args <- commandArgs(trailingOnly=TRUE)
 for(i in 1:length(args)){
     eval(parse(text=args[[i]]))
 }
 
-config <- paste(code.dir,'BCCA.set.config',sep='')
-print(readLines(config))
-source(config)
+source(paste(code.dir, 'BCCA', 'BCCA.R', sep='/'))
 
-nc <- nc_open(nc.obs.file)
 
-system(paste('cp ', template.file, '_tasmax_only.nc ', output.dir, output.file,
-       output.suffix, '_tasmax.nc', sep=''))
+#config <- paste(code.dir,'BCCA.set.config',sep='')
+#print(readLines(config))
+#source(config)
 
-nc.bcca <- nc_open(paste(output.dir, output.file, output.suffix, '_tasmax.nc',
-                   sep=''), write=TRUE)
+nc.obs <- nc_open(obs.file)
+nc.gcm <- nc_open(gcm.file)
 
-ncatt_put(nc.bcca, varid=0, attname='title', attval=output.nc.title)
-ncatt_put(nc.bcca, varid=0, attname='institution',
-          attval=output.nc.institution)
-ncatt_put(nc.bcca, varid=0, attname='source', attval=output.nc.source)
-ncatt_put(nc.bcca, varid=0, attname='input_data', attval=output.nc.input_data)
-ncatt_put(nc.bcca, varid=0, attname='reference', attval=output.nc.reference)
-ncatt_put(nc.bcca, varid=0, attname='project_id', attval=output.nc.project_id)
-ncatt_put(nc.bcca, varid=0, attname='experiment_id',
-          attval=output.nc.experiment_id)
-ncatt_put(nc.bcca, varid=0, attname='version', attval=output.nc.version)
-ncatt_put(nc.bcca, varid=0, attname='version_comment',
-          attval=output.nc.version_comment)
-ncatt_put(nc.bcca, varid=0, attname='contact1', attval=output.nc.contact1)
-ncatt_put(nc.bcca, varid=0, attname='contact2', attval=output.nc.contact2)
-ncatt_put(nc.bcca, varid=0, attname='contact3', attval=output.nc.contact3)
-ncatt_put(nc.bcca, varid=0, attname='history', attval=output.nc.history)
-ncatt_put(nc.bcca, varid='time', attname='units',
-          attval=output.nc.time.units)
-ncatt_put(nc.bcca, varid='time', attname='calendar',
-          attval=output.nc.calendar)
-nc_sync(nc.bcca)
+#system(paste('cp ', template.file, '_tasmax_only.nc ', output.dir, output.file,
+#       output.suffix, '_tasmax.nc', sep=''))
 
-load(paste(output.dir, 'gcm.lons', output.suffix, '.RData', sep=''))
-load(paste(output.dir, 'gcm.lats', output.suffix, '.RData', sep=''))
-load(paste(output.dir, 'obs.lons', output.suffix, '.RData', sep=''))
-load(paste(output.dir, 'obs.lats', output.suffix, '.RData', sep=''))
-load(paste(output.dir, 'obs.time', output.suffix, '.RData', sep=''))
-load(paste(output.dir, 'tasmax.aggregate', output.suffix, '.RData', sep=''))
+nc.bcca <- nc_open(output.file, write=TRUE)
 
-load(paste(output.dir, 'tasmax.gcm.time', output.suffix, '.RData', sep=''))
-load(paste(output.dir, 'tasmax.raw.time', output.suffix, '.RData', sep=''))
-load(paste(output.dir, 'tasmax.gcm_bc', output.suffix, '.RData', sep=''))
+## ncatt_put(nc.bcca, varid=0, attname='title', attval=output.nc.title)
+## ncatt_put(nc.bcca, varid=0, attname='institution',
+##           attval=output.nc.institution)
+## ncatt_put(nc.bcca, varid=0, attname='source', attval=output.nc.source)
+## ncatt_put(nc.bcca, varid=0, attname='input_data', attval=output.nc.input_data)
+## ncatt_put(nc.bcca, varid=0, attname='reference', attval=output.nc.reference)
+## ncatt_put(nc.bcca, varid=0, attname='project_id', attval=output.nc.project_id)
+## ncatt_put(nc.bcca, varid=0, attname='experiment_id',
+##           attval=output.nc.experiment_id)
+## ncatt_put(nc.bcca, varid=0, attname='version', attval=output.nc.version)
+## ncatt_put(nc.bcca, varid=0, attname='version_comment',
+##           attval=output.nc.version_comment)
+## ncatt_put(nc.bcca, varid=0, attname='contact1', attval=output.nc.contact1)
+## ncatt_put(nc.bcca, varid=0, attname='contact2', attval=output.nc.contact2)
+## ncatt_put(nc.bcca, varid=0, attname='contact3', attval=output.nc.contact3)
+## ncatt_put(nc.bcca, varid=0, attname='history', attval=output.nc.history)
+## ncatt_put(nc.bcca, varid='time', attname='units',
+##           attval=output.nc.time.units)
+## ncatt_put(nc.bcca, varid='time', attname='calendar',
+##           attval=output.nc.calendar)
+## nc_sync(nc.bcca)
+
+## load(paste(output.dir, 'gcm.lons', output.suffix, '.RData', sep=''))
+## load(paste(output.dir, 'gcm.lats', output.suffix, '.RData', sep=''))
+## load(paste(output.dir, 'obs.lons', output.suffix, '.RData', sep=''))
+## load(paste(output.dir, 'obs.lats', output.suffix, '.RData', sep=''))
+## load(paste(output.dir, 'obs.time', output.suffix, '.RData', sep=''))
+## load(paste(output.dir, 'tasmax.aggregate', output.suffix, '.RData', sep=''))
+
+## load(paste(output.dir, 'tasmax.gcm.time', output.suffix, '.RData', sep=''))
+## load(paste(output.dir, 'tasmax.raw.time', output.suffix, '.RData', sep=''))
+## load(paste(output.dir, 'tasmax.gcm_bc', output.suffix, '.RData', sep=''))
 
 ##******************************************************************************
 
-tasmax.missing_value <- ncatt_get(nc.bcca, varid='tasmax',
-                              attname='missing_value')$value
+## tasmax.missing_value <- ncatt_get(nc.bcca, varid='tasmax',
+##                               attname='missing_value')$value
 
-tasmax.scale_factor <- ncatt_get(nc.bcca, varid='tasmax',
-                             attname='scale_factor')$value
+## tasmax.scale_factor <- ncatt_get(nc.bcca, varid='tasmax',
+##                              attname='scale_factor')$value
 
-tasmax.add_offset <- ncatt_get(nc.bcca, varid='tasmax',
-                           attname='add_offset')$value
+## tasmax.add_offset <- ncatt_get(nc.bcca, varid='tasmax',
+##                            attname='add_offset')$value
 
 ################################################################################
 
-n.lon <- nrow(obs.lons)
-n.lat <- ncol(obs.lats)
+obs.time <- netcdf.calendar(nc.obs)
+gcm.time <- netcdf.calendar(nc.gcm)
 
 obs.Date <- as.Date(paste(1996, obs.time[,2], obs.time[,3], sep='-'))
-gcm.D1 <- as.Date(paste(1995, tasmax.gcm.time[,2], tasmax.gcm.time[,3], sep='-'))
-gcm.D2 <- as.Date(paste(1996, tasmax.gcm.time[,2], tasmax.gcm.time[,3], sep='-'))
-gcm.D3 <- as.Date(paste(1997, tasmax.gcm.time[,2], tasmax.gcm.time[,3], sep='-'))
+gcm.D1 <- as.Date(paste(1995, gcm.time[,2], gcm.time[,3], sep='-'))
+gcm.D2 <- as.Date(paste(1996, gcm.time[,2], gcm.time[,3], sep='-'))
+gcm.D3 <- as.Date(paste(1997, gcm.time[,2], gcm.time[,3], sep='-'))
 
 if (gcm == 'hadcm3') {
   gcm.D1[is.na(gcm.D1)] <- as.Date('1995-02-28')
@@ -90,9 +93,50 @@ if (gcm == 'hadcm3') {
   gcm.D3[is.na(gcm.D3)] <- as.Date('1997-02-28')
 }
 
-na.mask <- !is.na(tasmax.gcm[1,])
-for(i in seq_along(tasmax.gcm.time[,1])){
-    ncvar_put(nc=nc.bcca, varid='time', vals=tasmax.raw.time[i], start=i, count=1)
+# obs.at.analogues should be a matrix (n.analogues x number of cells)
+# gcm.values should a 1d vector of gcm values for each cell at the given time step
+construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
+    n.analogue <- nrow(obs.at.analogues)
+    alib <- jitter(obs.at.analogues)
+    Q <- alib %*% t(alib)
+    ridge <- tol * mean(diag(Q))
+    ridge <- diag(n.analogue) * ridge
+    (solve(Q + ridge) %*% alib) %*% as.matrix(gcm.values)
+}
+
+
+# returns 30 indices of the timestep for the closest analog and their corresponding weights
+find.analogues <- function(gcm, agg) {
+    na.mask <- !is.na(gcm)
+    alib <- which(((obs.Date <= (gcm.D1[i] + delta.days)) &
+                       (obs.Date >= (gcm.D1[i] - delta.days))) |
+                           ((obs.Date <= (gcm.D2[i] + delta.days)) &
+                                (obs.Date >= (gcm.D2[i] - delta.days))) |
+                                    ((obs.Date <= (gcm.D3[i] + delta.days)) &
+                                         (obs.Date >= (gcm.D3[i] - delta.days))))
+    alib <- alib[obs.time[alib,1] %in% obs.ca.years] ## FIXME: alib is only be defined for each julian day in any year... it is 50x redundant as defined
+
+    # Find the n.analogue closest observations from the library
+    gcm.i <- gcm[i, na.mask] # A single time step of GCM values
+    # (obs years * (delta days * 2 + 1)) x cells
+    tasmax.agg.alib <- tasmax.aggregate[alib, na.mask] # FIXME: this is the same for each julian day of any year
+    # substract the GCM at this time step from the aggregated obs *for every library time value*
+    # square that difference and then find the 30 lowest differences
+    # returns n analogues for this particular GCM timestep
+    analogues <- which(rank(rowSums(sweep(tasmax.agg.alib, 2, tasmax.gcm.i, '-')^2), # FIXME: colsums is faster
+                       ties.method='random') %in% 1:n.analogue) # FIXME, replace which(rank) with sort()[1:30]
+    # Constructed analogue weights
+    weights <- construct.analogue.weights(tasmax.agg.alib[analogues,], tasmax.gcm.i)
+    return list(analogues=analogues, weights=weigths)
+}
+
+n.analogues <- 30
+agg <- gcm
+gcm <- ncvar_get(nc, varname)-273.15 # FIXME: This is tas, but make this call udunits
+
+na.mask <- !is.na(gcm[1,])
+for(i in seq_along(gcm.time[,1])){
+    ncvar_put(nc=nc.bcca, varid='time', vals=i, start=i, count=1) # FIXME: do this all in one write outside of the loop
     # Develop library of observed days within +/- delta.days of the
     # GCM simulated day
     alib <- which(((obs.Date <= (gcm.D1[i] + delta.days)) &
@@ -101,47 +145,51 @@ for(i in seq_along(tasmax.gcm.time[,1])){
                    (obs.Date >= (gcm.D2[i] - delta.days))) |
                   ((obs.Date <= (gcm.D3[i] + delta.days)) &
                    (obs.Date >= (gcm.D3[i] - delta.days))))
-    alib <- alib[obs.time[alib,1] %in% obs.ca.years]
+    alib <- alib[obs.time[alib,1] %in% obs.ca.years] ## FIXME: alib is only be defined for each julian day in any year... it is 50x redundant as defined
     ## Maximum Temperature
     # Find the n.analogue closest observations from the library
-    tasmax.gcm.i <- tasmax.gcm[i,na.mask]
-    tasmax.agg.alib <- tasmax.aggregate[alib,na.mask]
-    analogues <- which(rank(rowSums(sweep(tasmax.agg.alib, 2, tasmax.gcm.i, '-')^2),
-                       ties.method='random') %in% 1:n.analogue)
+    gcm.i <- gcm[i, na.mask] # A single time step of GCM values
+    # (obs years * (delta days * 2 + 1)) x cells
+    agg.alib <- agg[alib, na.mask] # FIXME: this is the same for each julian day of any year
+    # substract the GCM at this time step from the aggregated obs *for every library time value*
+    # square that difference and then find the 30 lowest differences
+    # returns n analogues for this particular GCM timestep
+    analogues <- which(rank(rowSums(sweep(agg.alib, 2, gcm.i, '-')^2), # FIXME: colsums is faster
+                       ties.method='random') %in% 1:n.analogue) # FIXME, replace which(rank) with sort()[1:30]
     # Constructed analogue weights
-    tasmax.agg.alib <- jitter(tasmax.agg.alib[analogues,])
-    # tasmax.agg.alib <- tasmax.agg.alib[analogues,]
-    tasmax.Q <- tasmax.agg.alib %*% t(tasmax.agg.alib)
-    tasmax.ridge <- tol*mean(diag(tasmax.Q))
-    tasmax.ridge <- diag(n.analogue)*tasmax.ridge
-    tasmax.weights <- (solve(tasmax.Q + tasmax.ridge) %*%
-                   tasmax.agg.alib) %*% as.matrix(tasmax.gcm.i)
-    tasmax.analogue <- 0
-    for(j in 1:n.analogue){
-        tasmax.analogue.j <- ncvar_get(nc=nc, varid='tasmax',
-                                   start=c(1, 1, alib[analogues[j]]),
-                                   count=c(n.lon, n.lat, 1))
-        tasmax.analogue <- tasmax.analogue + tasmax.weights[j]*(tasmax.analogue.j)
+    weights <- construct.analogue.weights(agg.alib[analogues,], gcm.i)
+
+    # FIXME: This can easily be sum(mapply(weights, analog indices))
+    analogue <- 0
+    for(j in 1:n.analogues){
+        analogue.j <- ncvar_get(nc=nc, varid='tasmax',
+                                start=c(1, 1, alib[analogues[j]]),
+                                count=c(-1, -1, 1))
+        analogue <- analogue + weights[j]*(analogue.j)
     }
     cat('*')
-
+    
     ##
     # Create packed data values
-    tasmax.analogue <- round((tasmax.analogue - tasmax.add_offset)/tasmax.scale_factor)
+    tasmax.add_offset <- 0
+    tasmax.scale_factor <- 1.0
+    tasmax.missing_value <- -9999
+    analogue <- round((analogue - tasmax.add_offset)/tasmax.scale_factor) # FIXME: Don't bother packing
     ##
     # Missing values
-    tasmax.analogue[is.na(tasmax.analogue)] <- tasmax.missing_value
+    analogue[is.na(analogue)] <- tasmax.missing_value # FIXME: Don't bother. The library should do this
 
     # Write packed data to NetCDF files
-    ncvar_put(nc.bcca, varid='tasmax', vals=tasmax.analogue,
-              start=c(1, 1, i), count=c(n.lon, n.lat, 1))
+    ncvar_put(nc.bcca, varid=varid, vals=analogue,
+              start=c(1, 1, i), count=c(-1, -1, 1))
     nc_sync(nc.bcca)
     ##
 }
 
 ################################################################################
 
-nc_close(nc)
+nc_close(nc.gcm)
+nc_close(nc.obs)
 nc_close(nc.bcca)
 print('Elapsed Time')
 print(proc.time()-ptm)
