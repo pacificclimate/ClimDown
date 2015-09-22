@@ -9,6 +9,8 @@ source(paste(code.dir, 'bisect.R', sep='/'))
 source(paste(code.dir, 'netcdf.calendar.R', sep='/'))
 source(paste(code.dir,'DQM.R',sep='/'))
 
+options(max.GB=1)
+
 # "--args gcm.file='${gcm.file}' obs.file='${obs.file}' varid='${varid}'"
 args <- commandArgs(trailingOnly=TRUE)
 for(i in 1:length(args)){
@@ -45,7 +47,7 @@ chunk.indices <- function(total.size, chunk.size) {
     )
 }
 
-optimal.chunk.size <- function(n.elements, max.GB=10) {
+optimal.chuck.size <- function(n.elements, max.GB=getOption('max.GB')) {
   # 8 byte numerics
   floor(max.GB * 2 ** 30 / 8 / n.elements)
 }
