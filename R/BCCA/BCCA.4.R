@@ -18,13 +18,6 @@ for(i in 1:length(args)){
     eval(parse(text=args[[i]]))
 }
 
-source(paste(code.dir, 'BCCA', 'BCCA.R', sep='/'))
-
-
-#config <- paste(code.dir,'BCCA.set.config',sep='')
-#print(readLines(config))
-#source(config)
-
 nc.obs <- nc_open(obs.file)
 nc.gcm <- nc_open(gcm.file)
 
@@ -87,21 +80,21 @@ gcm.D1 <- as.Date(paste(1995, gcm.time[,2], gcm.time[,3], sep='-'))
 gcm.D2 <- as.Date(paste(1996, gcm.time[,2], gcm.time[,3], sep='-'))
 gcm.D3 <- as.Date(paste(1997, gcm.time[,2], gcm.time[,3], sep='-'))
 
-if (gcm == 'hadcm3') {
-  gcm.D1[is.na(gcm.D1)] <- as.Date('1995-02-28')
-  gcm.D2[is.na(gcm.D2)] <- as.Date('1996-02-28')
-  gcm.D3[is.na(gcm.D3)] <- as.Date('1997-02-28')
-}
+## if (gcm == 'hadcm3') {
+##   gcm.D1[is.na(gcm.D1)] <- as.Date('1995-02-28')
+##   gcm.D2[is.na(gcm.D2)] <- as.Date('1996-02-28')
+##   gcm.D3[is.na(gcm.D3)] <- as.Date('1997-02-28')
+## }
 
 # obs.at.analogues should be a matrix (n.analogues x number of cells)
 # gcm.values should a 1d vector of gcm values for each cell at the given time step
 construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
-    n.analogue <- nrow(obs.at.analogues)
+  n.analogue <- nrow(obs.at.analogues)
     alib <- jitter(obs.at.analogues)
     Q <- alib %*% t(alib)
     ridge <- tol * mean(diag(Q))
     ridge <- diag(n.analogue) * ridge
-    (solve(Q + ridge) %*% alib) %*% as.matrix(gcm.values)
+    t(solve(Q + ridge) %*% alib) %*% as.matrix(gcm.values)
 }
 
 
@@ -127,15 +120,21 @@ find.analogues <- function(gcm, agg) {
                        ties.method='random') %in% 1:n.analogue) # FIXME, replace which(rank) with sort()[1:30]
     # Constructed analogue weights
     weights <- construct.analogue.weights(tasmax.agg.alib[analogues,], tasmax.gcm.i)
-    return list(analogues=analogues, weights=weigths)
+    list(analogues=analogues, weights=weigths)
 }
 
 n.analogues <- 30
-agg <- gcm
-gcm <- ncvar_get(nc, varname)-273.15 # FIXME: This is tas, but make this call udunits
+delta.days <- 45
+obs.ca.years <- 1951:2005
+tol <- 0.1 ##0.001
+expon <- 0.5
+load('gcm_bc.Rdata')
+agg <- aggregates
+gcm <- ncvar_get(nc.gcm, varid)-273.15 # FIXME: This is tas, but make this call udunits
 
-na.mask <- !is.na(gcm[1,])
-for(i in seq_along(gcm.time[,1])){
+na.mask <- !is.na(agg[,,1])
+Rprof()
+for(i in seq_along(gcm.time[1:20,1])) { #FIXME: Do them all
     ncvar_put(nc=nc.bcca, varid='time', vals=i, start=i, count=1) # FIXME: do this all in one write outside of the loop
     # Develop library of observed days within +/- delta.days of the
     # GCM simulated day
@@ -148,27 +147,27 @@ for(i in seq_along(gcm.time[,1])){
     alib <- alib[obs.time[alib,1] %in% obs.ca.years] ## FIXME: alib is only be defined for each julian day in any year... it is 50x redundant as defined
     ## Maximum Temperature
     # Find the n.analogue closest observations from the library
-    gcm.i <- gcm[i, na.mask] # A single time step of GCM values
+    gcm.i <- gcm[,,i] # A single time step of GCM values
     # (obs years * (delta days * 2 + 1)) x cells
-    agg.alib <- agg[alib, na.mask] # FIXME: this is the same for each julian day of any year
+    agg.alib <- agg[,,alib] # FIXME: this is the same for each julian day of any year
     # substract the GCM at this time step from the aggregated obs *for every library time value*
     # square that difference and then find the 30 lowest differences
     # returns n analogues for this particular GCM timestep
-    analogues <- which(rank(rowSums(sweep(agg.alib, 2, gcm.i, '-')^2), # FIXME: colsums is faster
-                       ties.method='random') %in% 1:n.analogue) # FIXME, replace which(rank) with sort()[1:30]
+    analogues <- which(rank(rowSums(sweep(agg.alib, 1:2, gcm.i, '-')^2), # FIXME: colsums is faster
+                       ties.method='random') %in% 1:n.analogues) # FIXME, replace which(rank) with sort()[1:30]
     # Constructed analogue weights
-    weights <- construct.analogue.weights(agg.alib[analogues,], gcm.i)
+    obs.at.analogues <- matrix(agg.alib[,,analogues][na.mask], ncol=n.analogues)
+    weights <- construct.analogue.weights(obs.at.analogues, gcm.i[na.mask])
 
     # FIXME: This can easily be sum(mapply(weights, analog indices))
     analogue <- 0
     for(j in 1:n.analogues){
-        analogue.j <- ncvar_get(nc=nc, varid='tasmax',
+        analogue.j <- ncvar_get(nc=nc.obs, varid='tasmax',
                                 start=c(1, 1, alib[analogues[j]]),
                                 count=c(-1, -1, 1))
         analogue <- analogue + weights[j]*(analogue.j)
     }
     cat('*')
-    
     ##
     # Create packed data values
     tasmax.add_offset <- 0
@@ -185,6 +184,8 @@ for(i in seq_along(gcm.time[,1])){
     nc_sync(nc.bcca)
     ##
 }
+Rprof(NULL)
+summaryRprof()
 
 ################################################################################
 
