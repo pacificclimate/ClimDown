@@ -5,12 +5,11 @@
 ##******************************************************************************
 # Constructed analogues for each bias-corrected GCM day
 ##******************************************************************************
-ptm <- proc.time()
-print('Starting')
 
 library(ncdf4)
 code.dir <- Sys.getenv('CODE_DIR')
 source(paste(code.dir, 'netcdf.calendar.R', sep='/'))
+source(paste(code.dir, 'BCCA/BCCA.R', sep='/'))
 
 # "--args gcm.file='${gcm.file}' obs.file='${obs.file}' output.file='${output.file}' varid='${varid}'"
 args <- commandArgs(trailingOnly=TRUE)
@@ -89,12 +88,12 @@ gcm.D3 <- as.Date(paste(1997, gcm.time[,2], gcm.time[,3], sep='-'))
 # obs.at.analogues should be a matrix (n.analogues x number of cells)
 # gcm.values should a 1d vector of gcm values for each cell at the given time step
 construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
-  n.analogue <- nrow(obs.at.analogues)
+    n.analogue <- nrow(obs.at.analogues)
     alib <- jitter(obs.at.analogues)
     Q <- alib %*% t(alib)
     ridge <- tol * mean(diag(Q))
     ridge <- diag(n.analogue) * ridge
-    t(solve(Q + ridge) %*% alib) %*% as.matrix(gcm.values)
+    solve(Q + ridge) %*% alib %*% as.matrix(gcm.values)
 }
 
 
@@ -128,13 +127,34 @@ delta.days <- 45
 obs.ca.years <- 1951:2005
 tol <- 0.1 ##0.001
 expon <- 0.5
-load('gcm_bc.Rdata')
-agg <- aggregates
-gcm <- ncvar_get(nc.gcm, varid)-273.15 # FIXME: This is tas, but make this call udunits
 
-na.mask <- !is.na(agg[,,1])
+gcm <- ncvar_get(nc.gcm, varid)-273.15 # FIXME: This is tas, but make this call udunits
+gcm.time <- netcdf.calendar(nc.gcm, 'time', pcict=TRUE)
+#gcm <- sweep(gcm, 2, na.mask, '*') # Pretty sure that this is unnecessary
+gcm <- round(gcm, 3) # FIXME: This depends on the variable
+
+# Read the aggregated obs
+print(paste('Starting spatial aggregation', obs.file, gcm.file, varid))
+ptm <- proc.time()
+aggd.obs <- create.aggregates(obs.file, gcm.file, varid)
+print('Elapsed time')
+print(proc.time() - ptm)
+
+print(paste('Starting bias correction', obs.file, gcm.file, varid))
+ptm <- proc.time()
+obs.time <- netcdf.calendar(nc.obs, 'time', pcict=TRUE)
+gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=FALSE)
+print('Elapsed time')
+print(proc.time()-ptm)
+
+
+print(paste('Starting analaogue construction', obs.file, gcm.file, varid))
+ptm <- proc.time()
+na.mask <- !is.na(aggd.obs[,,1])
 Rprof()
-for(i in seq_along(gcm.time[1:20,1])) { #FIXME: Do them all
+
+obs.time <- netcdf.calendar(nc.obs)
+for(i in seq_along(gcm.time)) {
     ncvar_put(nc=nc.bcca, varid='time', vals=i, start=i, count=1) # FIXME: do this all in one write outside of the loop
     # Develop library of observed days within +/- delta.days of the
     # GCM simulated day
@@ -149,14 +169,17 @@ for(i in seq_along(gcm.time[1:20,1])) { #FIXME: Do them all
     # Find the n.analogue closest observations from the library
     gcm.i <- gcm[,,i] # A single time step of GCM values
     # (obs years * (delta days * 2 + 1)) x cells
-    agg.alib <- agg[,,alib] # FIXME: this is the same for each julian day of any year
+    agg.alib <- aggd.obs[,,alib] # FIXME: this is the same for each julian day of any year
+
     # substract the GCM at this time step from the aggregated obs *for every library time value*
     # square that difference and then find the 30 lowest differences
     # returns n analogues for this particular GCM timestep
-    analogues <- which(rank(rowSums(sweep(agg.alib, 1:2, gcm.i, '-')^2), # FIXME: colsums is faster
-                       ties.method='random') %in% 1:n.analogues) # FIXME, replace which(rank) with sort()[1:30]
+    diffs <- sweep(agg.alib, 1:2, gcm.i, '-')^2
+    # FIXME, replace which(rank) with sort()[1:30]
+    analogues <- which(rank(apply(diffs, 3, sum, na.rm=T), ties.method='random') %in% 1:n.analogues)
+
     # Constructed analogue weights
-    obs.at.analogues <- matrix(agg.alib[,,analogues][na.mask], ncol=n.analogues)
+    obs.at.analogues <- t(matrix(agg.alib[,,analogues][na.mask], ncol=n.analogues))
     weights <- construct.analogue.weights(obs.at.analogues, gcm.i[na.mask])
 
     # FIXME: This can easily be sum(mapply(weights, analog indices))
@@ -172,7 +195,7 @@ for(i in seq_along(gcm.time[1:20,1])) { #FIXME: Do them all
     # Create packed data values
     tasmax.add_offset <- 0
     tasmax.scale_factor <- 1.0
-    tasmax.missing_value <- -9999
+    tasmax.missing_value <- NA
     analogue <- round((analogue - tasmax.add_offset)/tasmax.scale_factor) # FIXME: Don't bother packing
     ##
     # Missing values
@@ -184,6 +207,9 @@ for(i in seq_along(gcm.time[1:20,1])) { #FIXME: Do them all
     nc_sync(nc.bcca)
     ##
 }
+print('Elapsed time')
+print(proc.time()-ptm)
+
 Rprof(NULL)
 summaryRprof()
 
@@ -192,5 +218,3 @@ summaryRprof()
 nc_close(nc.gcm)
 nc_close(nc.obs)
 nc_close(nc.bcca)
-print('Elapsed Time')
-print(proc.time()-ptm)
