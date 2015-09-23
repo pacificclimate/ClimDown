@@ -122,6 +122,8 @@ bias.correct.dqm <- function(gcm, aggd.obs,
 
     points <- na.unmasked(aggd.obs[,,1])
 
+    rv <- array(dim=dim(gcm))
+    rv[!is.na(aggd.obs[,,1])] <- t(
     mapply(function(x, y) {
         if (all(is.na(gcm[x,y,]))) {
             rep(NA,dim(gcm)[3])
@@ -137,7 +139,8 @@ bias.correct.dqm <- function(gcm, aggd.obs,
                              ratio=FALSE, detrend=detrend, n.max=NULL) # FIXME: ratio and detrend are based on variable
             c(dqm.tmp$g.p.bc, dqm.tmp$g.h.bc, dqm.tmp$g.f.bc)
         }
-    }, points[,'row'], points[,'col'])
+    }, points[,'row'], points[,'col']))
+    rv
 }
 
 # NetCDF I/O wrapper for bias.correct.dqm()
