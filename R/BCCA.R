@@ -4,18 +4,18 @@
 # Rewritten by James Hiebert <hiebert@uvic.ca>
 
 library(ncdf4)
-code.dir <- Sys.getenv('CODE_DIR')
-source(paste(code.dir, 'bisect.R', sep='/'))
-source(paste(code.dir, 'netcdf.calendar.R', sep='/'))
-source(paste(code.dir,'DQM.R',sep='/'))
 
-options(max.GB=1)
-options(trimmed.mean=0)
-options(delta.days=45)
-options(n.analogues=30)
-obs.ca.years <- 1951:2005
-options(tol=0.1)
-options(expon=0.5)
+.onLoad <- function(libname, pkgname) {
+    options(
+        max.GB=1,
+        trimmed.mean=0,
+        delta.days=45,
+        n.analogues=30,
+        obs.ca.years=1951:2005,
+        tol=0.1,
+        expon=0.5
+    )
+}
 
 target.units <- c(tasmax='celsius', tasmin='celsius', pr='mm day-1')
 
@@ -160,7 +160,7 @@ apply.analogues.netcdf <- function(analog.indices, weights, obs.nc) {
     sum(
         mapply(function(i, w) {
             ncvar_get(nc=obs.nc, varid=varid,
-                      start=c(1, 1, i)
+                      start=c(1, 1, i),
                       count=c(-1, -1, 1)) * w
         }
         )
@@ -250,7 +250,7 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     nc <- nc_open(gcm.file)
     gcm <- ncvar_get(nc, varname)
 
-    units <- ncatt_get(gcm.nc, varname, units)
+    units <- ncatt_get(nc, varname, units)
     gcm <- ud.convert(gcm, units, target.units[varname])
 
     gcm.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
