@@ -10,6 +10,7 @@ source(paste(code.dir, 'netcdf.calendar.R', sep='/'))
 source(paste(code.dir,'DQM.R',sep='/'))
 
 options(max.GB=1)
+options(trimmed.mean=0)
 
 # "--args gcm.file='${gcm.file}' obs.file='${obs.file}' varid='${varid}'"
 args <- commandArgs(trailingOnly=TRUE)
@@ -21,7 +22,8 @@ for(i in 1:length(args)){
 # The factor should be of length x * y
 # and a 3d array of obs (x, y, time)
 aggregate.obs <- function(cell.factor, obs) {
-  apply(obs, 3, function(x) tapply(x, cell.factor, mean, trim=0.1, na.rm=TRUE))
+  trim <- getOption('trimmed.mean')
+  apply(obs, 3, function(x) tapply(x, cell.factor, mean, trim=trim, na.rm=TRUE))
 }
 
 # Input cell indicies mapping obs grid to GCM grid
