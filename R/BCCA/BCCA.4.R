@@ -47,17 +47,6 @@ nc.bcca <- nc_open(output.file, write=TRUE)
 ##           attval=output.nc.calendar)
 ## nc_sync(nc.bcca)
 
-## load(paste(output.dir, 'gcm.lons', output.suffix, '.RData', sep=''))
-## load(paste(output.dir, 'gcm.lats', output.suffix, '.RData', sep=''))
-## load(paste(output.dir, 'obs.lons', output.suffix, '.RData', sep=''))
-## load(paste(output.dir, 'obs.lats', output.suffix, '.RData', sep=''))
-## load(paste(output.dir, 'obs.time', output.suffix, '.RData', sep=''))
-## load(paste(output.dir, 'tasmax.aggregate', output.suffix, '.RData', sep=''))
-
-## load(paste(output.dir, 'tasmax.gcm.time', output.suffix, '.RData', sep=''))
-## load(paste(output.dir, 'tasmax.raw.time', output.suffix, '.RData', sep=''))
-## load(paste(output.dir, 'tasmax.gcm_bc', output.suffix, '.RData', sep=''))
-
 ##******************************************************************************
 
 ## tasmax.missing_value <- ncatt_get(nc.bcca, varid='tasmax',
@@ -95,38 +84,6 @@ construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
     ridge <- diag(n.analogue) * ridge
     solve(Q + ridge) %*% alib %*% as.matrix(gcm.values)
 }
-
-
-# returns 30 indices of the timestep for the closest analog and their corresponding weights
-find.analogues <- function(gcm, agg) {
-    na.mask <- !is.na(gcm)
-    alib <- which(((obs.Date <= (gcm.D1[i] + delta.days)) &
-                       (obs.Date >= (gcm.D1[i] - delta.days))) |
-                           ((obs.Date <= (gcm.D2[i] + delta.days)) &
-                                (obs.Date >= (gcm.D2[i] - delta.days))) |
-                                    ((obs.Date <= (gcm.D3[i] + delta.days)) &
-                                         (obs.Date >= (gcm.D3[i] - delta.days))))
-    alib <- alib[obs.time[alib,1] %in% obs.ca.years] ## FIXME: alib is only be defined for each julian day in any year... it is 50x redundant as defined
-
-    # Find the n.analogue closest observations from the library
-    gcm.i <- gcm[i, na.mask] # A single time step of GCM values
-    # (obs years * (delta days * 2 + 1)) x cells
-    tasmax.agg.alib <- tasmax.aggregate[alib, na.mask] # FIXME: this is the same for each julian day of any year
-    # substract the GCM at this time step from the aggregated obs *for every library time value*
-    # square that difference and then find the 30 lowest differences
-    # returns n analogues for this particular GCM timestep
-    analogues <- which(rank(rowSums(sweep(tasmax.agg.alib, 2, tasmax.gcm.i, '-')^2), # FIXME: colsums is faster
-                       ties.method='random') %in% 1:n.analogue) # FIXME, replace which(rank) with sort()[1:30]
-    # Constructed analogue weights
-    weights <- construct.analogue.weights(tasmax.agg.alib[analogues,], tasmax.gcm.i)
-    list(analogues=analogues, weights=weigths)
-}
-
-n.analogues <- 30
-delta.days <- 45
-obs.ca.years <- 1951:2005
-tol <- 0.1 ##0.001
-expon <- 0.5
 
 gcm <- ncvar_get(nc.gcm, varid)-273.15 # FIXME: This is tas, but make this call udunits
 gcm.time <- netcdf.calendar(nc.gcm, 'time', pcict=TRUE)

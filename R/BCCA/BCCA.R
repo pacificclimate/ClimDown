@@ -12,12 +12,12 @@ source(paste(code.dir,'DQM.R',sep='/'))
 options(max.GB=1)
 options(trimmed.mean=0)
 options(delta.days=45)
+options(n.analogues=30)
+obs.ca.years <- 1951:2005
+options(tol=0.1)
+options(expon=0.5)
 
-# "--args gcm.file='${gcm.file}' obs.file='${obs.file}' varid='${varid}'"
-args <- commandArgs(trailingOnly=TRUE)
-for(i in 1:length(args)){
-    eval(parse(text=args[[i]]))
-}
+target.units <- c(tasmax='celsius', tasmin='celsius', pr='mm day-1')
 
 # Input is a factor of which maps fine-scale obs cells to large-scale gcm cells
 # The factor should be of length x * y
@@ -144,35 +144,6 @@ bias.correct.dqm <- function(gcm, aggd.obs,
     rv
 }
 
-# NetCDF I/O wrapper for bias.correct.dqm()
-bias.correct.dqm.netcdf <- function(gcm.nc, obs.nc, varname='tasmax') {
-    # Read in GCM data
-    nc <- nc_open(gcm.nc)
-    gcm <- ncvar_get(nc, varname)-273.15 # FIXME: This is tas, but make this call udunits
-    gcm.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
-    nc_close(nc)
-    #gcm <- sweep(gcm, 2, na.mask, '*') # Pretty sure that this is unnecessary
-    gcm <- round(gcm, 3) # FIXME: This depends on the variable
-
-    # Read the aggregated obs
-    nc <- nc_open(obs.nc)
-    obs.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
-    nc_close(nc)
-
-    print(paste('Starting spatial aggregation', obs.file, gcm.file, varid))
-    ptm <- proc.time()
-    aggd.obs <- create.aggregates(obs.nc, gcm.nc, varname)
-    print('Elapsed time')
-    print(proc.time() - ptm)
-
-    print(paste('Starting bias correction', gcm.nc, obs.nc, varname))
-    ptm <- proc.time()
-    gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=FALSE)
-    print('Elapsed time')
-    print(proc.time()-ptm)
-    gcm
-}
-
 # x: a vector of lat x lon x num.analogues
 # weights: a vector of length num.analogues
 apply.analogue <- function(x, weights) {
@@ -255,6 +226,44 @@ find.analogues <- function(gcm, agged.obs, times, now) {
     list(analogues=analogue.indices, weights=weigths)
 }
 
+# gcm: a 3d vector (lat x lon x time) representing a GCM simulation
+# agged.obs: a 3d vector (lat x lon x time) representing the aggregated observations
+# gcm.times: PCICt vector of time values for the GCM
+# obs.time: PCICt vector of time values for the aggregated obs
+find.all.analogues <- function(gcm, agged.obs, gcm.times, obs.times) {
+    sapply(seq_along(gcm.time), function(i) {
+        find.analogues(gcm[,,i], agged.obs, obs.times, gcm.times[i])
+    })
+}
 
-gcm <- bias.correct.dqm.netcdf(gcm.file, obs.file, varid)
-save(gcm, file=paste('gcm_bc.Rdata'))
+mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list()) {
+    nc <- nc_create(file.name, template.nc$var[[varname]])
+    mapply(function(name, value) {
+        ncatt_put(nc, varid=0, attname=name, attval=value)
+    }, names(global.attrs), global.attrs)
+    nc
+}
+
+# NetCDF I/O wrapper for the whole BCCA pipeline
+bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
+    # Read in GCM data
+    nc <- nc_open(gcm.file)
+    gcm <- ncvar_get(nc, varname)
+
+    units <- ncatt_get(gcm.nc, varname, units)
+    gcm <- ud.convert(gcm, units, target.units[varname])
+
+    gcm.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
+    nc_close(nc)
+
+    aggd.obs <- create.aggregates(obs.nc, gcm.nc, varname)
+
+    # Read the aggregated obs times
+    nc <- nc_open(obs.file)
+    obs.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
+    nc_close(nc)
+
+    bc.gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=FALSE)
+    analogues <- find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
+    save(analogues, file='analogues.Rdata')
+}
