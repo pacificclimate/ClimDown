@@ -49,7 +49,7 @@ chunk.indices <- function(total.size, chunk.size) {
     )
 }
 
-optimal.chuck.size <- function(n.elements, max.GB=getOption('max.GB')) {
+optimal.chunk.size <- function(n.elements, max.GB=getOption('max.GB')) {
   # 8 byte numerics
   floor(max.GB * 2 ** 30 / 8 / n.elements)
 }
@@ -93,8 +93,12 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   aggregates
 }
 
-na.masked <- function(grid) {
+na.unmasked <- function(grid) {
     which(!is.na(grid), arr.ind=TRUE)
+}
+
+na.masked <- function(grid) {
+    which(is.na(grid), arr.ind=TRUE)
 }
 
 ##******************************************************************************
@@ -116,7 +120,7 @@ bias.correct.dqm <- function(gcm, aggd.obs,
     tn <- as.PCICt(historical.end, attr(obs.time, 'cal'))
     hist.period.obs <- obs.time >= t0 & obs.time <= tn
 
-    points <- na.masked(aggd.obs[,,1])
+    points <- na.unmasked(aggd.obs[,,1])
 
     mapply(function(x, y) {
         if (all(is.na(gcm[x,y,]))) {
