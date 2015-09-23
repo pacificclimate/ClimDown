@@ -11,6 +11,7 @@ source(paste(code.dir,'DQM.R',sep='/'))
 
 options(max.GB=1)
 options(trimmed.mean=0)
+options(delta.days=45)
 
 # "--args gcm.file='${gcm.file}' obs.file='${obs.file}' varid='${varid}'"
 args <- commandArgs(trailingOnly=TRUE)
@@ -170,6 +171,88 @@ bias.correct.dqm.netcdf <- function(gcm.nc, obs.nc, varname='tasmax') {
     print('Elapsed time')
     print(proc.time()-ptm)
     gcm
+}
+
+# x: a vector of lat x lon x num.analogues
+# weights: a vector of length num.analogues
+apply.analogue <- function(x, weights) {
+    n.cells <- prod(dim(x)[1:2])
+    weights <- sapply(weigths, rep, n.cells)
+    dim(weights) <- dim(x)
+    apply(x * weights, 1:2, sum)
+}
+
+# analog.indices: vector of time indices that correspond to the timesteps to compose together
+# weights: vector of length num.analogues corresponding to the analog indices
+# obs.nc: An open netcdf file containing gridded observations
+apply.analogues.netcdf <- function(analog.indices, weights, obs.nc) {
+    sum(
+        mapply(function(i, w) {
+            ncvar_get(nc=obs.nc, varid=varid,
+                      start=c(1, 1, i)
+                      count=c(-1, -1, 1)) * w
+        }
+        )
+    )
+}
+
+# obs.at.analogues should be a matrix (n.analogues x number of cells)
+# gcm.values should a 1d vector of gcm values for each cell at the given time step
+construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
+    n.analogue <- nrow(obs.at.analogues)
+    alib <- jitter(obs.at.analogues)
+    Q <- alib %*% t(alib)
+    ridge <- tol * mean(diag(Q))
+    ridge <- diag(n.analogue) * ridge
+    solve(Q + ridge) %*% alib %*% as.matrix(gcm.values)
+}
+
+# times: timeseries vector of PCICt types
+# today: PCICt object, a particular day of the year (year is not important) for which
+# to compute a window around
+# delta.days: an integer describing the size of the window on either side of today
+analogue.search.space <- function(times, today,
+                                  delta.days=getOption('delta.days'),
+                                  year.range=c(1951, 2005)) {
+    dpy <- attr(times, 'dpy')
+    cal <- attr(times, 'cal')
+    jdays <- as.numeric(strftime(times, '%j'))
+    today <- as.numeric(strftime(today, '%j'))
+
+    distance <- abs(jdays %% dpy - today)
+    in.days <- distance <= delta.days | distance >= (dpy - delta.days)
+    in.years <- times >= as.PCICt(paste(year.range[1], 1, 1, sep='-'), cal=cal) &
+        times <= as.PCICt(paste(year.range[2], 12, 31, sep='-'), cal=cal)
+    which(in.days & in.years)
+}
+
+# gcm: a 2d vector representing a single time step of GCM valuse
+# agged.obs: a 3d vector (lat x lon x time) representing the aggregated observations
+# times: PCICt vector of time values for the aggregated obs
+# now: PCICt value of the current time step
+# returns 30 indices of the timestep for the closest analog and their corresponding weights
+find.analogues <- function(gcm, agged.obs, times, now) {
+    # FIXME: alib is only be defined for each julian day in any year...
+    # it is 50x redundant as defined and could be precomputed
+    ti <- analogue.search.space(times, today)
+    agged.obs <- aggd.obs[,,ti,drop=FALSE]
+
+    # Find the n.analogue closest observations from the library
+    # (obs years * (delta days * 2 + 1)) x cells
+    # substract the GCM at this time step from the aggregated obs *for every library time value*
+    # square that difference and then find the 30 lowest differences
+    # returns n analogues for this particular GCM timestep
+    diffs <- sweep(agged.obs, 1:2, gcm, '-')^2
+
+    # FIXME, replace which(rank) with sort()[1:30]
+    analogue.indices <- which(rank(apply(diffs, 3, sum, na.rm=T), ties.method='random') <= n.analogues)
+
+    # Constructed analogue weights
+    na.mask <- !is.na(aggd.obs[,,1])
+    obs.at.analogues <- t(matrix(agged.obs[,,analogues][na.mask], ncol=n.analogues))
+    weights <- construct.analogue.weights(obs.at.analogues, gcm[na.mask])
+
+    list(analogues=analogue.indices, weights=weigths)
 }
 
 
