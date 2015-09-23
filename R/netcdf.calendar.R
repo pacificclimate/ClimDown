@@ -5,7 +5,7 @@
 
 library(ncdf4)
 library(PCICt)
-library(RNetCDF)
+#library(RNetCDF)
 
 netcdf.calendar <-
 function(nc, time.variable='time', pcict=FALSE)

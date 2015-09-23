@@ -67,7 +67,7 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   obs.lats <- ncvar_get(nc.obs, 'lat')
   gcm.lons <- ncvar_get(nc.gcm, 'lon')-360
   gcm.lats <- ncvar_get(nc.gcm, 'lat')
-  obs.time <- netcdf.calendar(nc.obs)
+  obs.time <- netcdf.calendar(nc.obs, 'time', pcict=TRUE)
 
   # Figure out which GCM grid boxes are associated with each fine-scale grid point
   grid.mapping <- regrid.coarse.to.fine(gcm.lats, gcm.lons, obs.lats, obs.lons)
@@ -80,7 +80,7 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
 
   chunk.size <- optimal.chunk.size(length(obs.lons) * length(obs.lats))
 
-  chunks <- chunk.indices(nrow(obs.time), chunk.size)
+  chunks <- chunk.indices(length(obs.time), chunk.size)
   # Loop over chunks fo time
   for (i in chunks) {
     cat(i['start'], i['stop'], '\n')
