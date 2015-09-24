@@ -148,7 +148,7 @@ bias.correct.dqm <- function(gcm, aggd.obs,
 # weights: a vector of length num.analogues
 apply.analogue <- function(x, weights) {
     n.cells <- prod(dim(x)[1:2])
-    weights <- sapply(weigths, rep, n.cells)
+    weights <- sapply(weights, rep, n.cells)
     dim(weights) <- dim(x)
     apply(x * weights, 1:2, sum)
 }
@@ -173,7 +173,7 @@ construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
     n.analogue <- nrow(obs.at.analogues)
     alib <- jitter(obs.at.analogues)
     Q <- alib %*% t(alib)
-    ridge <- tol * mean(diag(Q))
+    ridge <- getOption('tol') * mean(diag(Q))
     ridge <- diag(n.analogue) * ridge
     solve(Q + ridge) %*% alib %*% as.matrix(gcm.values)
 }
@@ -185,12 +185,12 @@ construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
 analogue.search.space <- function(times, today,
                                   delta.days=getOption('delta.days'),
                                   year.range=c(1951, 2005)) {
-    dpy <- attr(times, 'dpy')
     cal <- attr(times, 'cal')
-    jdays <- as.numeric(strftime(times, '%j'))
-    today <- as.numeric(strftime(today, '%j'))
+    dpy <- if (cal == '360') 360 else 365
+    jdays <- as.numeric(format(times, '%j'))
+    today <- as.numeric(format(today, '%j'))
 
-    distance <- abs(jdays %% dpy - today)
+    distance <- abs(jdays - today)
     in.days <- distance <= delta.days | distance >= (dpy - delta.days)
     in.years <- times >= as.PCICt(paste(year.range[1], 1, 1, sep='-'), cal=cal) &
         times <= as.PCICt(paste(year.range[2], 12, 31, sep='-'), cal=cal)
@@ -202,28 +202,30 @@ analogue.search.space <- function(times, today,
 # times: PCICt vector of time values for the aggregated obs
 # now: PCICt value of the current time step
 # returns 30 indices of the timestep for the closest analog and their corresponding weights
-find.analogues <- function(gcm, agged.obs, times, now) {
+find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.analogues')) {
     # FIXME: alib is only be defined for each julian day in any year...
     # it is 50x redundant as defined and could be precomputed
-    ti <- analogue.search.space(times, today)
-    agged.obs <- aggd.obs[,,ti,drop=FALSE]
+    ti <- analogue.search.space(times, now)
+    agged.obs <- agged.obs[,,ti,drop=FALSE]
 
     # Find the n.analogue closest observations from the library
     # (obs years * (delta days * 2 + 1)) x cells
     # substract the GCM at this time step from the aggregated obs *for every library time value*
-    # square that difference and then find the 30 lowest differences
-    # returns n analogues for this particular GCM timestep
+    # square that difference
     diffs <- sweep(agged.obs, 1:2, gcm, '-')^2
+    diffs <- apply(diffs, 3, sum, na.rm=T)
 
+    # Then find the 30 lowest differences
+    # returns n analogues for this particular GCM timestep
     # FIXME, replace which(rank) with sort()[1:30]
-    analogue.indices <- which(rank(apply(diffs, 3, sum, na.rm=T), ties.method='random') <= n.analogues)
+    analogue.indices <- which(rank(diffs, ties.method='random') <= n.analogues)
 
     # Constructed analogue weights
-    na.mask <- !is.na(aggd.obs[,,1])
-    obs.at.analogues <- t(matrix(agged.obs[,,analogues][na.mask], ncol=n.analogues))
+    na.mask <- !is.na(agged.obs[,,1])
+    obs.at.analogues <- t(matrix(agged.obs[,,analogue.indices][na.mask], ncol=n.analogues))
     weights <- construct.analogue.weights(obs.at.analogues, gcm[na.mask])
 
-    list(analogues=analogue.indices, weights=weigths)
+    list(analogues=analogue.indices, weights=weights)
 }
 
 # gcm: a 3d vector (lat x lon x time) representing a GCM simulation
@@ -232,6 +234,7 @@ find.analogues <- function(gcm, agged.obs, times, now) {
 # obs.time: PCICt vector of time values for the aggregated obs
 find.all.analogues <- function(gcm, agged.obs, gcm.times, obs.times) {
     sapply(seq_along(gcm.times), function(i) {
+        print(paste(i, '/', length(gcm.times)))
         find.analogues(gcm[,,i], agged.obs, obs.times, gcm.times[i])
     })
 }
