@@ -231,7 +231,7 @@ find.analogues <- function(gcm, agged.obs, times, now) {
 # gcm.times: PCICt vector of time values for the GCM
 # obs.time: PCICt vector of time values for the aggregated obs
 find.all.analogues <- function(gcm, agged.obs, gcm.times, obs.times) {
-    sapply(seq_along(gcm.time), function(i) {
+    sapply(seq_along(gcm.times), function(i) {
         find.analogues(gcm[,,i], agged.obs, obs.times, gcm.times[i])
     })
 }
