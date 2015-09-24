@@ -67,7 +67,7 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   obs.lats <- ncvar_get(nc.obs, 'lat')
   gcm.lons <- ncvar_get(nc.gcm, 'lon')-360
   gcm.lats <- ncvar_get(nc.gcm, 'lat')
-  obs.time <- netcdf.calendar(nc.obs, 'time', pcict=TRUE)
+  obs.time <- netcdf.calendar(nc.obs, 'time')
 
   # Figure out which GCM grid boxes are associated with each fine-scale grid point
   grid.mapping <- regrid.coarse.to.fine(gcm.lats, gcm.lons, obs.lats, obs.lons)
@@ -253,14 +253,14 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     units <- ncatt_get(nc, varname, 'units')$value
     gcm <- ud.convert(gcm, units, target.units[varname])
 
-    gcm.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
+    gcm.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)
 
     aggd.obs <- create.aggregates(obs.file, gcm.file, varname)
 
     # Read the aggregated obs times
     nc <- nc_open(obs.file)
-    obs.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
+    obs.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)
 
     bc.gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=FALSE)
