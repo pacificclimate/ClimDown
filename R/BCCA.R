@@ -250,13 +250,13 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     nc <- nc_open(gcm.file)
     gcm <- ncvar_get(nc, varname)
 
-    units <- ncatt_get(nc, varname, units)
+    units <- ncatt_get(nc, varname, 'units')$value
     gcm <- ud.convert(gcm, units, target.units[varname])
 
     gcm.time <- netcdf.calendar(nc, 'time', pcict=TRUE)
     nc_close(nc)
 
-    aggd.obs <- create.aggregates(obs.nc, gcm.nc, varname)
+    aggd.obs <- create.aggregates(obs.file, gcm.file, varname)
 
     # Read the aggregated obs times
     nc <- nc_open(obs.file)
