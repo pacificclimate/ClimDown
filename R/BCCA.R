@@ -212,13 +212,14 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
     # (obs years * (delta days * 2 + 1)) x cells
     # substract the GCM at this time step from the aggregated obs *for every library time value*
     # square that difference
-    diffs <- sweep(agged.obs, 1:2, gcm, '-')^2
+
+    diffs <- (agged.obs - array(gcm, dim(agged.obs))) ^ 2
     diffs <- apply(diffs, 3, sum, na.rm=T)
 
     # Then find the 30 lowest differences
-    # returns n analogues for this particular GCM timestep
-    # FIXME, replace which(rank) with sort()[1:30]
-    analogue.indices <- which(rank(diffs, ties.method='random') <= n.analogues)
+    # returns the indices for the n closest analogues
+    # of this particular GCM timestep
+    analogue.indices <- quickest.select(diffs, n.analogues)
 
     # Constructed analogue weights
     na.mask <- !is.na(agged.obs[,,1])
