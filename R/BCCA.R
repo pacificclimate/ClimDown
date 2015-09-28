@@ -110,7 +110,8 @@ bias.correct.dqm <- function(gcm, aggd.obs,
                              gcm.time,
                              historical.start='1951-1-1',
                              historical.end='2005-12-31',
-                             detrend=FALSE) {
+                             detrend=FALSE,
+                             ratio=FALSE) {
     t0 <- as.PCICt(historical.start, attr(gcm.time, 'cal'))
     tn <- as.PCICt(historical.end, attr(gcm.time, 'cal'))
     prehist.period <- gcm.time < t0
@@ -137,7 +138,7 @@ bias.correct.dqm <- function(gcm, aggd.obs,
                              months.gcm.f=as.numeric(format(gcm.time[future.period], '%m')),
                              gcm.p=gcm[x,y, prehist.period],
                              months.gcm.p=as.numeric(format(gcm.time[prehist.period], '%m')),
-                             ratio=FALSE, detrend=detrend, n.max=NULL) # FIXME: ratio and detrend are based on variable
+                             ratio=ratio, detrend=detrend, n.max=NULL)
             c(dqm.tmp$g.p.bc, dqm.tmp$g.h.bc, dqm.tmp$g.f.bc)
         }
     }, points[,'row'], points[,'col']))
@@ -250,6 +251,8 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 
 # NetCDF I/O wrapper for the whole BCCA pipeline
 bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
+    is.pr <- varname == 'pr'
+
     # Read in GCM data
     nc <- nc_open(gcm.file)
     gcm <- ncvar_get(nc, varname)
@@ -267,7 +270,7 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     obs.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)
 
-    bc.gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=FALSE)
+    bc.gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=!is.pr, ratio=!is.pr)
     analogues <- find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
     save(analogues, file='analogues.Rdata')
 }
