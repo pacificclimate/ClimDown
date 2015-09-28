@@ -300,7 +300,7 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     obs.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)
 
-    bc.gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=!is.pr, ratio=!is.pr)
+    bc.gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=!is.pr, ratio=is.pr)
     analogues <- find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
     save(analogues, file='analogues.Rdata')
 }
