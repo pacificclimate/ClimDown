@@ -198,6 +198,28 @@ analogue.search.space <- function(times, today,
     which(in.days & in.years)
 }
 
+# FIXME: There's one remaining difference between pr and tas in the old BCCA code that
+# needs to be explained and implemented
+# 116,11yc108,109
+# <     pr.gcm.i <- pr.gcm[i,na.mask]^expon
+# <     pr.agg.alib <- pr.aggregate[alib,na.mask]^expon
+# ---
+# >     tasmin.gcm.i <- tasmin.gcm[i,na.mask]
+# >     tasmin.agg.alib <- tasmin.aggregate[alib,na.mask]
+# And then when the analogues are applied...
+# 133,134c125
+# <         pr.analogue.j <- round(pr.analogue.j, 3)
+# <         pr.analogue <- pr.analogue + pr.weights[j]*(pr.analogue.j^expon)
+# ---
+# >         tasmin.analogue <- tasmin.analogue + tasmin.weights[j]*(tasmin.analogue.j)
+# 136,137c127
+# <     pr.analogue[pr.analogue < 0] <- 0
+# <     pr.analogue <- pr.analogue^(1/expon)
+# ---
+# >     cat('*')
+# What's the purpose of taking the square root before combining the analogues and then
+# squaring after they're combined?
+
 # gcm: a 2d vector representing a single time step of GCM valuse
 # agged.obs: a 3d vector (lat x lon x time) representing the aggregated observations
 # times: PCICt vector of time values for the aggregated obs
