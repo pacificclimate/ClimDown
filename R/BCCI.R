@@ -132,8 +132,7 @@ interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons, obs.lats, obs.lons, gcm) 
          apply(gcm, 3, function(z) {
             cat('*')
             src$z <- z
-            interp.surface(src, dst)
-            #FIXME add the climatology? after this
+            interp.surface(src, dst) # from fields pacakge
         }), dim=c(dim(obs.grid$x), nt)
     )
 }
