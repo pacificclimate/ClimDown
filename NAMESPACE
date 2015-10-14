@@ -1,2 +1,2 @@
-export(bcca.netcdf.wrapper)
+export(bcca.netcdf.wrapper, bcci.netcdf.wrapper)
 import(ncdf4, udunits2, PCICt, fields)

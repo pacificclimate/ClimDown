@@ -210,7 +210,7 @@ bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     obs.times <- netcdf.calendar(nc.obs)
 
     # Calculate the chunk size
-    nt.per.chunk <- optimal.chunk.size(length(obs.lats) * length(obs.lons), .5)
+    nt.per.chunk <- optimal.chunk.size(length(obs.lats) * length(obs.lons), getOption('max.GB'))
 
     print('Creating cache file for the interpolated GCM')
     output.nc <-mk.output.ncdf(output.file, varname, nc.gcm, nc.obs)
