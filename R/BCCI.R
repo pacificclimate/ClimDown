@@ -198,7 +198,7 @@ bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     gcm.lats <- nc_gety(nc.gcm)
     gcm.lons <- nc_getx(nc.gcm)
     units <- ncatt_get(nc.gcm, varid, 'units')$value
-    gcm <- ud.convert(gcm, units, 'celsius') # FIXME: use target units
+    gcm <- ud.convert(gcm, units, target.units[varname])
     gcm.times <- netcdf.calendar(nc.gcm)
 
     print('Calculating daily anomalies on the GCM')
