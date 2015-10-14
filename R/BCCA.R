@@ -3,22 +3,6 @@
 # Based loosely off of code by Alex Cannon <acannon@uvic.ca>
 # Rewritten by James Hiebert <hiebert@uvic.ca>
 
-library(ncdf4)
-
-.onLoad <- function(libname, pkgname) {
-    options(
-        max.GB=1,
-        trimmed.mean=0,
-        delta.days=45,
-        n.analogues=30,
-        obs.ca.years=1951:2005,
-        tol=0.1,
-        expon=0.5
-    )
-}
-
-target.units <- c(tasmax='celsius', tasmin='celsius', pr='mm day-1')
-
 # Input is a factor of which maps fine-scale obs cells to large-scale gcm cells
 # The factor should be of length x * y
 # and a 3d array of obs (x, y, time)

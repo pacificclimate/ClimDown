@@ -1,33 +1,7 @@
-library(ncdf4)
-library(PCICt)
-library(udunits2)
-library(fields)
-source('~/code/ClimDown/R/netcdf.calendar.R')
-
-usage <- function() {
-    print("Usage: Rscript BCCA.R [gcm_file] [obs_file] [output_file] [variable_name]")
-}
-
-args <- as.list(commandArgs(trailingOnly=TRUE))
-if (length(args) != 4) {
-    usage()
-    quit(status=1)
-}
-
-names(args) <- c('gcm.file', 'obs.file', 'output.file', 'varid')
-attach(args)
-
-## FIXME: Remove this before going to library
-chunk.indices <- function(total.size, chunk.size) {
-  lapply(
-    split(1:total.size, ceiling(1:total.size / chunk.size)),
-    function(x) {c('start'=min(x), 'stop'=max(x), 'length'=length(x))}
-    )
-}
-optimal.chunk.size <- function(n.elements, max.GB=getOption('max.GB')) {
-  # 8 byte numerics
-  floor(max.GB * 2 ** 30 / 8 / n.elements)
-}
+##******************************************************************************
+# Bias Corrected Climate Imprint (BCCI) downscaling algorithm
+# Conceptually based (very) loosely off of code by Alex Cannon <acannon@uvic.ca>
+# Rewritten by James Hiebert <hiebert@uvic.ca>
 
 # O(n) time, O(n) space
 monthly.climatologies <- function(gcm, gcm.times) {
@@ -259,4 +233,3 @@ bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     nc_close(output.nc)
 }
 
-bcci.netcdf.wrapper(gcm.file, obs.file, output.file, varid)
