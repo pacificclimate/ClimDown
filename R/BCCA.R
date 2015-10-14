@@ -25,20 +25,6 @@ aggregate.obs.to.gcm.grid <- function(xi, yi, xn, yn, obs) {
   return(rv)
 }
 
-# Takes a vector length and chunk size
-# returns a list of (start, stop, length)
-chunk.indices <- function(total.size, chunk.size) {
-  lapply(
-    split(1:total.size, ceiling(1:total.size / chunk.size)),
-    function(x) {c('start'=min(x), 'stop'=max(x), 'length'=length(x))}
-    )
-}
-
-optimal.chunk.size <- function(n.elements, max.GB=getOption('max.GB')) {
-  # 8 byte numerics
-  floor(max.GB * 2 ** 30 / 8 / n.elements)
-}
-
 ##******************************************************************************
 # Read fine-scale grid and spatially aggregate to GCM grid
 ##******************************************************************************
