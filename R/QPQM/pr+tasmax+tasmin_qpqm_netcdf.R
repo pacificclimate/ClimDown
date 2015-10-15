@@ -120,7 +120,7 @@ for(chunk in 1:2) { ##ncol(i.chunks)){
     ## I'm pretty sure that this chunking is backwards from optimal. The larger the ii the better
     ## Experiment measure 1068 x 10 vs 10 x 1068 (each are just under a GB)
     ## Actualy, they seem to be about the same, so, whatever
-    cat('--> bias correcting pr chunk', chunk, '/', n.chunks, '-')
+    cat('--> bias correcting', varname, 'chunk', chunk, '/', n.chunks, '-')
     o.c.chunk <- ncvar_get(obs, start=c(ii[1], jj[1], cal.obs[1]),
                            count=c(length(ii), length(jj), n.obs),
                            varid=varname, collapse_degen=FALSE)
