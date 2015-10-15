@@ -6,7 +6,7 @@ usage <- function() {
     print("Usage: Rscript BCCA.R [gcm_file] [obs_file] [output_file] [variable_name]")
 }
 
-args <- list(commandArgs(trailingOnly=TRUE))
+args <- as.list(commandArgs(trailingOnly=TRUE))
 if (length(args) != 4) {
     usage()
     quit(status=1)
