@@ -33,8 +33,8 @@ if('--help' %in% args || length(args)==0) {
 library(ncdf4)
 library(abind)
 library(PCICt)
-library(Rmpi)
-library(doMPI)	
+#library(Rmpi)
+#library(doMPI)	
 source('/home/hiebert/code/git/ClimDown/R/QPQM/QPQM.R')
 
 #cl <- startMPIcluster(count=args[4])
@@ -116,7 +116,6 @@ browser()
 
 for(chunk in 1:2) { ##ncol(i.chunks)){
     ii <- na.omit(i.chunks[,chunk])
-    #### pr
     ## I'm pretty sure that this chunking is backwards from optimal. The larger the ii the better
     ## Experiment measure 1068 x 10 vs 10 x 1068 (each are just under a GB)
     ## Actualy, they seem to be about the same, so, whatever
@@ -142,8 +141,9 @@ for(chunk in 1:2) { ##ncol(i.chunks)){
                          m.p=apply(m.p.chunk, 2, identity),
                          .inorder=TRUE,
                          .combine=cbind,
-                         .multicombine=TRUE,
-                         .options.mpi=mpi.options) %do% {
+                         .multicombine=TRUE
+                         #.options.mpi=mpi.options) %do% {
+                         ) %do {
         i = ij['i',]
         j = ij['j',]
         if(all(is.na(o.c)) || all(is.na(m.p))) {
@@ -175,7 +175,7 @@ nc_close(out)
 print('Elapsed Time')
 print(proc.time() - ptm)
 
-closeCluster(cl)
-mpi.quit()
+#closeCluster(cl)
+#mpi.quit()
 
 ################################################################################
