@@ -59,9 +59,8 @@ pr.n.tau <- 1001
 tasmax.n.tau <- 101
 tasmin.n.tau <- 101
 
-pr.seasonal <- TRUE
-tasmax.seasonal <- FALSE
-tasmin.seasonal <- FALSE
+seasonal <- list(pr=TRUE, tasmax=TRUE, tasmin=TRUE)
+ratio <- seasonal
 
 pr.offset <- 0.
 pr.scale <- 1.
@@ -122,15 +121,17 @@ for(chunk in 1:2) { ##ncol(i.chunks)){
     #### pr
     ## I'm pretty sure that this chunking is backwards from optimal. The larger the ii the better
     ## Experiment measure 1068 x 10 vs 10 x 1068 (each are just under a GB)
+    ## Actualy, they seem to be about the same, so, whatever
     cat('--> bias correcting pr chunk', chunk, '/', n.chunks, '-')
     o.c.chunk <- ncvar_get(obs, start=c(ii[1], jj[1], cal.obs[1]),
                            count=c(length(ii), length(jj), n.obs),
-                           varid='pr', collapse_degen=FALSE)
+                           varid=varname, collapse_degen=FALSE)
     cat('-')
     m.p.chunk <- ncvar_get(gcm, start=c(ii[1], jj[1], 1),
                            count=c(length(ii), length(jj), n.gcm),
-                           varid='pr', collapse_degen=FALSE)*pr.scale +
-                               pr.offset
+                           varid=varname, collapse_degen=FALSE)
+
+    # FIXME: dont bother permuting and redimming... just do an apply(preserve=3) below
     m.p.chunk <- aperm(m.p.chunk, c(3, 1, 2))
     dim(m.p.chunk) <- c(n.gcm, length(ii) * length(jj))
     o.c.chunk <- aperm(o.c.chunk, c(3, 1, 2))
@@ -153,13 +154,12 @@ for(chunk in 1:2) { ##ncol(i.chunks)){
             m.c <- m.p[cal.gcm[1]:(cal.gcm[1]+diff(cal.gcm))]
             tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=dates.o.c,
                   dates.m.c=dates.m.c, dates.m.p=dates.gcm,
-                  n.window=n.window, ratio=TRUE, trace=trace,
-                  jitter.factor=jitter.factor, seasonal=pr.seasonal,
+                  n.window=n.window, ratio=ratio[[varname]], trace=trace,
+                  jitter.factor=jitter.factor, seasonal=seasonal[[varname]],
                   multiyear=multiyear, n.multiyear=n.multiyear,
                   expand.multiyear=expand.multiyear, n.tau=pr.n.tau)
         }
     }
-    gc()
     dim(m.p.chunk) <- c(n.gcm, length(ii), length(jj))
     cat(dim(m.p.chunk))
     m.p.chunk <- aperm(m.p.chunk, c(2, 3, 1))
@@ -167,120 +167,7 @@ for(chunk in 1:2) { ##ncol(i.chunks)){
     ncvar_put(nc=out, varid='pr', vals=m.p.chunk,
               start=c(ii[1], jj[1], 1), count=dim(m.p.chunk))
     print(object.size(x=lapply(ls(), get)), units="Mb")
-    #browser()
-    #### tasmax
-    cat('--> bias correcting tasmax chunk', chunk, '/', n.chunks, '-')
-    o.c.chunk <- ncvar_get(obs, start=c(ii[1], jj[1], cal.obs[1]),
-                           count=c(length(ii), length(jj), n.obs),
-                           varid='tasmax', collapse_degen=FALSE)
-    cat('-')
-    m.p.chunk <- ncvar_get(gcm, start=c(ii[1], jj[1], 1),
-                           count=c(length(ii), length(jj), n.gcm),
-                           varid='tasmax', collapse_degen=FALSE)*tasmax.scale +
-                               tasmax.offset
-    tasmax.chunk <- m.p.chunk
-    m.p.chunk <- aperm(m.p.chunk, c(3, 1, 2))
-    dim(m.p.chunk) <- c(n.gcm, length(ii) * length(jj))
-    o.c.chunk <- aperm(o.c.chunk, c(3, 1, 2))
-    dim(o.c.chunk) <- c(n.obs, length(ii) * length(jj))
-    cat('*\n')
-    ij <- t(expand.grid(i=seq_along(ii), j=seq_along(jj)))
-    print('TX parallel start')
-    m.p.chunk <- foreach(ij=ij,
-                         o.c=apply(o.c.chunk, 2, identity),
-                         m.p=apply(m.p.chunk, 2, identity),
-                         .inorder=TRUE,
-                         .combine=cbind,
-                         .multicombine=TRUE,
-                         .options.mpi=mpi.options) %dopar% {
-        i = ij['i',]
-        j = ij['j',]
-        print(i)
-        print(j)
-
-        if(all(is.na(o.c)) || all(is.na(m.p))) {
-            na.gcm
-        } else {
-            m.c <- m.p[cal.gcm[1]:(cal.gcm[1]+diff(cal.gcm))]
-            tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=dates.o.c,
-                  dates.m.c=dates.m.c, dates.m.p=dates.gcm,
-                  n.window=n.window, ratio=FALSE, trace=trace,
-                  jitter.factor=jitter.factor, seasonal=tasmax.seasonal,
-                  multiyear=multiyear, n.multiyear=n.multiyear,
-                  expand.multiyear=expand.multiyear, n.tau=tasmax.n.tau)
-        }
-    }
-    print('TX parallel done')
-
-    dim(m.p.chunk) <- c(n.gcm, length(ii), length(jj))
-    cat(dim(m.p.chunk))
-    m.p.chunk <- aperm(m.p.chunk, c(2, 3, 1))
-    cat('--> writing chunk', chunk, '/', n.chunks, '\n')
-    ncvar_put(nc=out, varid='tasmax', vals=m.p.chunk,
-              start=c(ii[1], jj[1], 1), count=dim(m.p.chunk))
     gc()
-
-    print(object.size(x=lapply(ls(), get)), units="Mb")
-    #### tasmin
-    cat('--> bias correcting tasmin chunk', chunk, '/', n.chunks, '-')
-    o.c.chunk <- ncvar_get(obs, start=c(ii[1], jj[1], cal.obs[1]),
-                           count=c(length(ii), length(jj), n.obs),
-                           varid='tasmin', collapse_degen=FALSE)
-    cat('-')
-    m.p.chunk <- ncvar_get(gcm, start=c(ii[1], jj[1], 1),
-                           count=c(length(ii), length(jj), n.gcm),
-                           varid='tasmin', collapse_degen=FALSE)*tasmin.scale +
-                               tasmin.offset
-    ##Fix tasmin field
-    tasmin.chunk <- m.p.chunk
-    b <- which(is.na(tasmin.chunk))
-    a <- which(is.na(tasmax.chunk))
-    test <- b %in% a
-    flag <- b[which(!test)]
-    tasmin.chunk[flag] <- mean(c(tasmin.chunk[flag+1],tasmin.chunk[flag-1]))    
-
-    m.p.chunk <- tasmin.chunk
-    m.p.chunk <- aperm(m.p.chunk, c(3, 1, 2))
-    dim(m.p.chunk) <- c(n.gcm, length(ii) * length(jj))
-    o.c.chunk <- aperm(o.c.chunk, c(3, 1, 2))
-    dim(o.c.chunk) <- c(n.obs, length(ii) * length(jj))
-    cat('*\n')
-    ij <- t(expand.grid(i=seq_along(ii), j=seq_along(jj)))
-    print('Start parallel')
-    print(object.size(x=lapply(ls(), get)), units="Mb")
-
-    m.p.chunk <- foreach(ij=ij,
-                         o.c=apply(o.c.chunk, 2, identity),
-                         m.p=apply(m.p.chunk, 2, identity),
-                         .inorder=TRUE,
-                         .combine=cbind,
-                         .multicombine=TRUE,
-                         .options.mpi=mpi.options) %dopar% {
-
-        i = ij['i',]
-        j = ij['j',]
-        if(all(is.na(o.c)) || all(is.na(m.p))) {
-            na.gcm
-        } else {
-          m.c <- m.p[cal.gcm[1]:(cal.gcm[1]+diff(cal.gcm))]
-          tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=dates.o.c,
-                dates.m.c=dates.m.c, dates.m.p=dates.gcm,
-                n.window=n.window, ratio=FALSE, trace=trace,
-                jitter.factor=jitter.factor, seasonal=tasmin.seasonal,
-                multiyear=multiyear, n.multiyear=n.multiyear,
-                expand.multiyear=expand.multiyear, n.tau=tasmin.n.tau)
-        }
-    }
-    print('End tasmin parallel')
-    browser()
-    dim(m.p.chunk) <- c(n.gcm, length(ii), length(jj))
-    cat(dim(m.p.chunk))
-    m.p.chunk <- aperm(m.p.chunk, c(2, 3, 1))
-    cat('--> writing chunk', chunk, '/', n.chunks, '\n')
-    ncvar_put(nc=out, varid='tasmin', vals=m.p.chunk,
-              start=c(ii[1], jj[1], 1), count=dim(m.p.chunk))
-    gc()
-    ##}##Close if (1==0)
 }
 
 nc_close(gcm)
