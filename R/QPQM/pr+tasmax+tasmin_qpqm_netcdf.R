@@ -6,11 +6,11 @@ rm(list=ls())
 
 ptm <- proc.time()
 
-#args <- commandArgs(TRUE)
+args <- commandArgs(TRUE)
 
-args <- c('/home/data/climate/downscale/CMIP5/nobackup/QPQM/nobackup/pr+tasmax+tasmin_day_ANUSPLIN300_observation_v20140414_19710101-20001231.nc',
-          '/home/data/climate/downscale/CMIP5/nobackup/QPQM/done/pr+tasmax+tasmin_day_QPQM+ANUSPLIN300+ACCESS1-0_historical+rcp45_r1i1p1_19500101-21001231.nc',
-          '/datasets/projects-rci-scratch/test/dqm_netcdf.nc','2')
+#args <- c('/home/data/climate/downscale/CMIP5/nobackup/QPQM/nobackup/pr+tasmax+tasmin_day_ANUSPLIN300_observation_v20140414_19710101-20001231.nc',
+#          '/home/data/climate/downscale/CMIP5/nobackup/QPQM/done/pr+tasmax+tasmin_day_QPQM+ANUSPLIN300+ACCESS1-0_historical+rcp45_r1i1p1_19500101-21001231.nc',
+#          '/datasets/projects-rci-scratch/test/dqm_netcdf.nc','2')
 
 ## Help section
 if('--help' %in% args || length(args)==0) {
@@ -24,6 +24,7 @@ if('--help' %in% args || length(args)==0) {
       obs_file - Gridded historical observations
       gcm_file - GCM simulations interpolated to the obs_file grid
       output_file - The file to create (or overwrite) with the bias corrected outputs
+      varname - The name of the variable to downscale
       cores - The number of processor cores
 
       All files should have the same spatial domain.\n\n')
@@ -36,13 +37,13 @@ library(abind)
 library(PCICt)
 library(Rmpi)
 library(doMPI)	
-source('QPQM.R')
+source('/home/hiebert/code/git/ClimDown/R/QPQM/QPQM.R')
 
-cl <- startMPIcluster(count=args[4])
-registerDoMPI(cl)
-exportDoMPI(cl, c('QPQM', 'tQPQM'))
-mpi.options <- list(info=FALSE, profile=FALSE)
-cat('cores =', getDoParWorkers(), '\n')
+#cl <- startMPIcluster(count=args[4])
+#registerDoMPI(cl)
+#exportDoMPI(cl, c('QPQM', 'tQPQM'))
+#mpi.options <- list(info=FALSE, profile=FALSE)
+#cat('cores =', getDoParWorkers(), '\n')
 
 n.window <- 1
 multiyear <- TRUE
@@ -73,13 +74,14 @@ tasmin.scale <- 1.
 obs.file <- args[1]
 gcm.file <- args[2]
 out.file <- args[3]
+varname <- args[4]
 
 gcm <- nc_open(gcm.file)
 obs <- nc_open(obs.file)
 
 cat('Copying input file', gcm.file, 'to', out.file, '\n')
 #file.copy(from=gcm.file, to=out.file, overwrite=TRUE)
-out <- nc_open(out.file, write=TRUE)
+out <- nc_create(out.file, obs$var[[varname]])
 
 lat <- gcm$dim$lat$vals
 lon <- gcm$dim$lon$vals
@@ -103,7 +105,8 @@ n.obs <- diff(cal.obs)+1
 dates.o.c <- dates.obs[cal.obs[1]:(cal.obs[1]+diff(cal.obs)),]
 dates.m.c <- dates.gcm[cal.gcm[1]:(cal.gcm[1]+diff(cal.gcm)),]
 na.gcm <- rep(NA, n.gcm)
-                  
+
+# A very strange way of dividing up into equal chunks
 i.indices <- seq_along(lon)
 i.chunks <- suppressWarnings(matrix(c(i.indices, rep(NA, length(i.indices))),
                              ncol=n.chunks*2))
@@ -112,11 +115,13 @@ n.chunks <- ncol(i.chunks)
 
 jj <- seq_along(lat)
 
+browser()
 
 for(chunk in 1:2) { ##ncol(i.chunks)){
     ii <- na.omit(i.chunks[,chunk])
     #### pr
-    if (1==1) {
+    ## I'm pretty sure that this chunking is backwards from optimal. The larger the ii the better
+    ## Experiment measure 1068 x 10 vs 10 x 1068 (each are just under a GB)
     cat('--> bias correcting pr chunk', chunk, '/', n.chunks, '-')
     o.c.chunk <- ncvar_get(obs, start=c(ii[1], jj[1], cal.obs[1]),
                            count=c(length(ii), length(jj), n.obs),
@@ -139,7 +144,7 @@ for(chunk in 1:2) { ##ncol(i.chunks)){
                          .inorder=TRUE,
                          .combine=cbind,
                          .multicombine=TRUE,
-                         .options.mpi=mpi.options) %dopar% {
+                         .options.mpi=mpi.options) %do% {
         i = ij['i',]
         j = ij['j',]
         if(all(is.na(o.c)) || all(is.na(m.p))) {
@@ -162,8 +167,7 @@ for(chunk in 1:2) { ##ncol(i.chunks)){
     ncvar_put(nc=out, varid='pr', vals=m.p.chunk,
               start=c(ii[1], jj[1], 1), count=dim(m.p.chunk))
     print(object.size(x=lapply(ls(), get)), units="Mb")
-    browser()
-  }##If loop
+    #browser()
     #### tasmax
     cat('--> bias correcting tasmax chunk', chunk, '/', n.chunks, '-')
     o.c.chunk <- ncvar_get(obs, start=c(ii[1], jj[1], cal.obs[1]),
