@@ -195,19 +195,11 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     seasonal <- list(pr=TRUE, tasmax=TRUE, tasmin=TRUE)
     ratio <- seasonal
 
-    pr.offset <- 0.
-    pr.scale <- 1.
-    tasmax.offset <- 0.
-    tasmax.scale <- 1.
-    tasmin.offset <- 0.
-    tasmin.scale <- 1.
-
     # Read in the input and output files
     gcm <- nc_open(gcm.file)
     obs <- nc_open(obs.file)
 
-    cat('Copying input file', gcm.file, 'to', out.file, '\n')
-    #file.copy(from=gcm.file, to=out.file, overwrite=TRUE)
+    cat('Creating input file', out.file, '\n')
     out <- nc_create(out.file, obs$var[[varname]])
 
     lat <- gcm$dim$lat$vals
