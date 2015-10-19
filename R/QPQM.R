@@ -6,6 +6,7 @@
 library(ncdf4)
 library(abind)
 library(PCICt)
+library(iterators)
 
 QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
                  n.tau=NULL)
@@ -199,8 +200,10 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     gcm <- nc_open(gcm.file)
     obs <- nc_open(obs.file)
 
-    cat('Creating input file', out.file, '\n')
-    out <- nc_create(out.file, obs$var[[varname]])
+    cat('Creating output file', out.file, '\n')
+    dims <- obs$var[[varname]]$dim
+    vars <- ncvar_def(varname, obs$var[[varname]]$units, dims)
+    out <- nc_create(out.file, vars)
 
     lat <- gcm$dim$lat$vals
     lon <- gcm$dim$lon$vals
@@ -234,9 +237,8 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
 
     jj <- seq_along(lat)
 
-    browser()
-
-    for(chunk in 1:2) { ##ncol(i.chunks)){
+    for (chunk in 1:ncol(i.chunks)) {
+        ## What does this do?
         ii <- na.omit(i.chunks[,chunk])
         ## I'm pretty sure that this chunking is backwards from optimal. The larger the ii the better
         ## Experiment measure 1068 x 10 vs 10 x 1068 (each are just under a GB)
@@ -259,36 +261,42 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         ij <- t(expand.grid(i=seq_along(ii), j=seq_along(jj)))
 
         m.p.chunk <- foreach(ij=ij,
-                             o.c=apply(o.c.chunk, 2, identity),
-                             m.p=apply(m.p.chunk, 2, identity),
+                             o.c=iter(o.c.chunk, by='col'),
+                             m.p=iter(m.p.chunk, by='col'),
                              .inorder=TRUE,
                              .combine=cbind,
                              .multicombine=TRUE
                              #.options.mpi=mpi.options) %do% {
-                             ) %do {
-                                 i = ij['i',]
-                                 j = ij['j',]
-                                 if(all(is.na(o.c)) || all(is.na(m.p))) {
-                                     na.gcm
-                                 } else {
-                                     m.c <- m.p[cal.gcm[1]:(cal.gcm[1]+diff(cal.gcm))]
-                                     tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=dates.o.c,
-                                           dates.m.c=dates.m.c, dates.m.p=dates.gcm,
-                                           n.window=n.window, ratio=ratio[[varname]], trace=trace,
-                                           jitter.factor=jitter.factor, seasonal=seasonal[[varname]],
-                                           multiyear=multiyear, n.multiyear=n.multiyear,
-                                           expand.multiyear=expand.multiyear, n.tau=pr.n.tau)
-                                 }
+                             ) %do% {
+
+                               browser()
+                               dim(o.c) <- dim(m.p) <- NULL
+                               # FIXME: 
+                               if(all(is.na(o.c)) || all(is.na(m.p))) {
+                                 na.gcm
+                               } else {
+                                 m.c <- m.p[cal.gcm[1]:(cal.gcm[1]+diff(cal.gcm))]
+                                 tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=dates.o.c,
+                                       dates.m.c=dates.m.c, dates.m.p=dates.gcm,
+                                       n.window=n.window, ratio=ratio[[varname]], trace=trace,
+                                       jitter.factor=jitter.factor, seasonal=seasonal[[varname]],
+                                       multiyear=multiyear, n.multiyear=n.multiyear,
+                                       expand.multiyear=expand.multiyear, n.tau=pr.n.tau)
+                               }
                              }
+                       #apply(o.c.chunk, 2, identity),
+                       #apply(m.p.chunk, 2, identity)
+                       #)
         dim(m.p.chunk) <- c(n.gcm, length(ii), length(jj))
         cat(dim(m.p.chunk))
         m.p.chunk <- aperm(m.p.chunk, c(2, 3, 1))
         cat('--> writing chunk', chunk, '/', n.chunks, '\n')
-        ncvar_put(nc=out, varid='pr', vals=m.p.chunk,
+        ncvar_put(nc=out, varid=varname, vals=m.p.chunk,
                   start=c(ii[1], jj[1], 1), count=dim(m.p.chunk))
         print(object.size(x=lapply(ls(), get)), units="Mb")
         gc()
     }
+
 
     nc_close(gcm)
     nc_close(obs)
