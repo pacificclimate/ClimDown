@@ -179,14 +179,15 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
 qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
     ptm <- proc.time()
 
+    # FIXME: Parametrize all of this
     n.window <- 1
     multiyear <- TRUE
     expand.multiyear <- TRUE
     n.multiyear <- 30
     trace <- 0.005
     jitter.factor <- 0.01
-    cstart <- 1971 
-    cend <- 2000
+    cstart <- as.POSIXct('1971-01-01', tz='GMT')
+    cend <- as.POSIXct('2000-12-31', tz='GMT')
     n.chunks <- 500
 
     pr.n.tau <- 1001
@@ -201,100 +202,101 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     obs <- nc_open(obs.file)
 
     cat('Creating output file', out.file, '\n')
-    dims <- obs$var[[varname]]$dim
-    vars <- ncvar_def(varname, obs$var[[varname]]$units, dims)
+    dims <- gcm$var[[varname]]$dim
+    vars <- ncvar_def(varname, gcm$var[[varname]]$units, dims)
     out <- nc_create(out.file, vars)
 
     lat <- gcm$dim$lat$vals
     lon <- gcm$dim$lon$vals
 
-    dates.gcm <- as.PCICt(strsplit(gcm$dim$time$units, ' ')[[1]][3],
-                          gcm$dim$time$calendar) + gcm$dim$time$vals*86400
-    dates.gcm <-  apply(do.call(rbind, strsplit(format(dates.gcm, '%Y %m %d'),
-                                                ' ')), 2, as.integer)
+    compute.time.stats <- function(nc, start=NULL, end=NULL) {
+        vals <- netcdf.calendar(nc, 'time')
+        if (is.null(start)) {
+          start <- vals[1]
+        }
+        if (is.null(end)) {
+          end <- vals[length(vals)]
+        }
+        t0 <- as.PCICt(start, cal=attr(vals, 'cal'))
+        tn <- as.PCICt(end, cal=attr(vals, 'cal'))
+        i <- vals >= t0 & vals <= tn
+        vals <- vals[i]
+        list(vals=vals,
+             i=i,
+             t0=min(which(i)),
+             tn=max(which(i)),
+             n=length(vals)
+             )
+    }
 
-    dates.obs <- as.PCICt(strsplit(obs$dim$time$units, ' ')[[1]][3],
-                          obs$dim$time$calendar) + obs$dim$time$vals*86400
-    dates.obs <-  apply(do.call(rbind, strsplit(format(dates.obs, '%Y %m %d'),
-                                                ' ')), 2, as.integer)
+    gcm.time <- compute.time.stats(gcm, cstart)
+    obs.time <- compute.time.stats(obs, cstart, cend)
 
-    cal.gcm <- c(min(which(dates.gcm[,1]==cstart)), max(which(dates.gcm[,1]==cend)))
-    cal.obs <- c(min(which(dates.obs[,1]==cstart)), max(which(dates.obs[,1]==cend)))
+    na.gcm <- rep(NA, gcm.time$n)
 
-    n.gcm <- nrow(dates.gcm)
-    n.obs <- diff(cal.obs)+1
+    # Calculate out to split up the chunks for reading.
+    # We have to read all of time and as many rows as possible
+    # The spatial domains are the same
+    chunk.size <- optimal.chunk.size((gcm.time$n + obs.time$n) * length(lat))
+    chunk.lon.indices <- chunk.indices(length(lon), chunk.size)
+    n.chunks <- length(chunk.lon.indices)
 
-    dates.o.c <- dates.obs[cal.obs[1]:(cal.obs[1]+diff(cal.obs)),]
-    dates.m.c <- dates.gcm[cal.gcm[1]:(cal.gcm[1]+diff(cal.gcm)),]
-    na.gcm <- rep(NA, n.gcm)
+    for (chunk in chunk.lon.indices) {
+        print(sort( sapply(ls(),function(x){object.size(get(x))})))
 
-    # A very strange way of dividing up into equal chunks
-    i.indices <- seq_along(lon)
-    i.chunks <- suppressWarnings(matrix(c(i.indices, rep(NA, length(i.indices))),
-                                        ncol=n.chunks*2))
-    i.chunks <- i.chunks[,1:(min(which(is.na(i.chunks[1,])))-1), drop=FALSE]
-    n.chunks <- ncol(i.chunks)
+        print(paste('Bias correcting', varname, 'longitudes', chunk['start'], '-', chunk['stop'], '/', length(lon)))
+        print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', obs$filename))
 
-    jj <- seq_along(lat)
-
-    for (chunk in 1:ncol(i.chunks)) {
-        ## What does this do?
-        ii <- na.omit(i.chunks[,chunk])
-        ## I'm pretty sure that this chunking is backwards from optimal. The larger the ii the better
-        ## Experiment measure 1068 x 10 vs 10 x 1068 (each are just under a GB)
-        ## Actualy, they seem to be about the same, so, whatever
-        cat('--> bias correcting', varname, 'chunk', chunk, '/', n.chunks, '-')
-        o.c.chunk <- ncvar_get(obs, start=c(ii[1], jj[1], cal.obs[1]),
-                               count=c(length(ii), length(jj), n.obs),
-                               varid=varname, collapse_degen=FALSE)
-        cat('-')
-        m.p.chunk <- ncvar_get(gcm, start=c(ii[1], jj[1], 1),
-                               count=c(length(ii), length(jj), n.gcm),
+        o.c.chunk <- ncvar_get(obs, start=c(chunk['start'], 1, obs.time$t0),
+                               count=c(-1, chunk['length'], obs.time$n),
                                varid=varname, collapse_degen=FALSE)
 
-        # FIXME: dont bother permuting and redimming... just do an apply(preserve=3) below
-        m.p.chunk <- aperm(m.p.chunk, c(3, 1, 2))
-        dim(m.p.chunk) <- c(n.gcm, length(ii) * length(jj))
-        o.c.chunk <- aperm(o.c.chunk, c(3, 1, 2))
-        dim(o.c.chunk) <- c(n.obs, length(ii) * length(jj))
-        cat('*\n')
-        ij <- t(expand.grid(i=seq_along(ii), j=seq_along(jj)))
+        print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', gcm$filename))
+
+        m.p.chunk <- ncvar_get(gcm, start=c(chunk['start'], 1, gcm.time$t0),
+                               count=c(-1, chunk['length'], gcm.time$n),
+                               varid=varname, collapse_degen=FALSE)
+
+        xn <- dim(o.c.chunk)[1]
+        yn <- dim(o.c.chunk)[2]
+        ij <- t(expand.grid(i=seq(xn), j=seq(yn)))
 
         m.p.chunk <- foreach(ij=ij,
-                             o.c=iter(o.c.chunk, by='col'),
-                             m.p=iter(m.p.chunk, by='col'),
+                             o.c=lapply(ij, function(ij) {o.c.chunk[ij['i'], ij['j'],] } ),
+                             m.p=lapply(ij, function(ij) {m.p.chunk[ij['i'], ij['j'],] } ),
                              .inorder=TRUE,
                              .combine=cbind,
                              .multicombine=TRUE
                              #.options.mpi=mpi.options) %do% {
                              ) %do% {
 
-                               browser()
-                               dim(o.c) <- dim(m.p) <- NULL
                                # FIXME: 
-                               if(all(is.na(o.c)) || all(is.na(m.p))) {
+                               if(all(is.na(o.c), is.na(m.p))) {
                                  na.gcm
                                } else {
-                                 m.c <- m.p[cal.gcm[1]:(cal.gcm[1]+diff(cal.gcm))]
-                                 tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=dates.o.c,
-                                       dates.m.c=dates.m.c, dates.m.p=dates.gcm,
+                                 # consider the modeled values during the observed period separately
+                                 dates.m.c <- gcm.time$vals[gcm.time$vals < max(obs.time$vals)]
+                                 m.c <- m.p[gcm.time$vals < max(obs.time$vals)]
+                                 tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=obs.time$vals,
+                                       dates.m.c=dates.m.c, dates.m.p=gcm.time$vals,
                                        n.window=n.window, ratio=ratio[[varname]], trace=trace,
                                        jitter.factor=jitter.factor, seasonal=seasonal[[varname]],
                                        multiyear=multiyear, n.multiyear=n.multiyear,
                                        expand.multiyear=expand.multiyear, n.tau=pr.n.tau)
                                }
                              }
-                       #apply(o.c.chunk, 2, identity),
-                       #apply(m.p.chunk, 2, identity)
-                       #)
-        dim(m.p.chunk) <- c(n.gcm, length(ii), length(jj))
-        cat(dim(m.p.chunk))
+
+        dim(m.p.chunk) <- c(gcm.time$n, xn, yn)
+        print(dim(m.p.chunk))
         m.p.chunk <- aperm(m.p.chunk, c(2, 3, 1))
-        cat('--> writing chunk', chunk, '/', n.chunks, '\n')
+        print(dim(m.p.chunk))
+        print(paste("Writing chunk", chunk['start'], '-', chunk['stop'], '/', length(lon), 'to file:', out$filename))
         ncvar_put(nc=out, varid=varname, vals=m.p.chunk,
-                  start=c(ii[1], jj[1], 1), count=dim(m.p.chunk))
-        print(object.size(x=lapply(ls(), get)), units="Mb")
+                  start=c(chunk['start'], 1, 1), count=dim(m.p.chunk))
+        #print(object.size(x=lapply(ls(), get)), units="Mb")
+        rm(o.c.chunk, m.p.chunk)
         gc()
+        #print(sort( sapply(ls(),function(x){object.size(get(x))})))
     }
 
 
