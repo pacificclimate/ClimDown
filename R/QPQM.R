@@ -190,9 +190,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     cend <- as.POSIXct('2000-12-31', tz='GMT')
     n.chunks <- 500
 
-    pr.n.tau <- 1001
-    tasmax.n.tau <- 101
-    tasmin.n.tau <- 101
+    tau <- list(pr=1001, tasmax=101, tasmin=101)
 
     seasonal <- list(pr=TRUE, tasmax=TRUE, tasmin=TRUE)
     ratio <- seasonal
@@ -282,7 +280,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
                                        n.window=n.window, ratio=ratio[[varname]], trace=trace,
                                        jitter.factor=jitter.factor, seasonal=seasonal[[varname]],
                                        multiyear=multiyear, n.multiyear=n.multiyear,
-                                       expand.multiyear=expand.multiyear, n.tau=pr.n.tau)
+                                       expand.multiyear=expand.multiyear, n.tau=tau[[varname]])
                                }
                              }
 
