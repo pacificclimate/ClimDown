@@ -259,14 +259,11 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         yn <- dim(o.c.chunk)[2]
         ij <- t(expand.grid(i=seq(xn), j=seq(yn)))
 
-        m.p.chunk <- foreach(ij=ij,
-                             o.c=lapply(ij, function(ij) {o.c.chunk[ij['i'], ij['j'],] } ),
-                             m.p=lapply(ij, function(ij) {m.p.chunk[ij['i'], ij['j'],] } ),
-                             .inorder=TRUE,
-                             .combine=cbind,
-                             .multicombine=TRUE
-                             #.options.mpi=mpi.options) %do% {
-                             ) %do% {
+        #m.p.chunk <- foreach(ij=ij,
+        m.p.chunk <- sapply(ij,
+                            function(ij) {
+                              o.c <- o.c.chunk[ij['i'], ij['j'],]
+                              m.p <- m.p.chunk[ij['i'], ij['j'],]
 
                                # FIXME: 
                                if(all(is.na(o.c), is.na(m.p))) {
@@ -282,7 +279,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
                                        multiyear=multiyear, n.multiyear=n.multiyear,
                                        expand.multiyear=expand.multiyear, n.tau=tau[[varname]])
                                }
-                             }
+                            })
 
         dim(m.p.chunk) <- c(gcm.time$n, xn, yn)
         print(dim(m.p.chunk))
