@@ -81,10 +81,12 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
     # expand.multiyear --> fold incomplete multi-year block into previous
     # n.tau = NULL --> number of empirical quantiles (NULL=sample length)
     require(foreach)
+    dates.m.p <- data.frame(year=as.numeric(format(dates.m.p, '%Y')), month=as.numeric(format(dates.m.p, '%m')))
+    dates.o.c <- data.frame(year=as.numeric(format(dates.o.c, '%Y')), month=as.numeric(format(dates.o.c, '%m')))
+    dates.m.c <- data.frame(year=as.numeric(format(dates.m.c, '%Y')), month=as.numeric(format(dates.m.c, '%m')))
     months <- unique(dates.m.p[,2])
-    print(paste('i is: ',i,sep=''))
-    print(paste('j is: ',j,sep=''))
-    if(multiyear){
+
+    if (multiyear) {
         # Apply QPQM to multi-year blocks of length n.multiyear
         dates.m.p[,1] <- dates.m.p[,1]-(dates.m.p[,1]%%n.multiyear)
         if(expand.multiyear){
