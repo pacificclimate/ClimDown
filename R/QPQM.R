@@ -229,6 +229,9 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
 
     gcm.time <- compute.time.stats(gcm, cstart)
     obs.time <- compute.time.stats(obs, cstart, cend)
+    # indices for gcm time that are within the observational time range
+    gcm.obs.subset.i <- gcm.time$vals > as.PCICt(cstart, attr(gcm.time$vals, 'cal')) & gcm.time$vals < as.PCICt(cend, attr(gcm.time$vals, 'cal'))
+
 
     na.gcm <- rep(NA, gcm.time$n)
 
@@ -257,29 +260,29 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
 
         xn <- dim(o.c.chunk)[1]
         yn <- dim(o.c.chunk)[2]
-        ij <- t(expand.grid(i=seq(xn), j=seq(yn)))
+        ij <- expand.grid(i=seq(xn), j=seq(yn))
 
-        #m.p.chunk <- foreach(ij=ij,
-        m.p.chunk <- sapply(ij,
-                            function(ij) {
-                              o.c <- o.c.chunk[ij['i'], ij['j'],]
-                              m.p <- m.p.chunk[ij['i'], ij['j'],]
+        m.p.chunk <- mapply(
+                       function(i, j) {
+                         o.c <- o.c.chunk[i, j, ]
+                         m.p <- m.p.chunk[i, j, ]
 
-                               # FIXME: 
-                               if(all(is.na(o.c), is.na(m.p))) {
-                                 na.gcm
-                               } else {
-                                 # consider the modeled values during the observed period separately
-                                 dates.m.c <- gcm.time$vals[gcm.time$vals < max(obs.time$vals)]
-                                 m.c <- m.p[gcm.time$vals < max(obs.time$vals)]
-                                 tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=obs.time$vals,
-                                       dates.m.c=dates.m.c, dates.m.p=gcm.time$vals,
-                                       n.window=n.window, ratio=ratio[[varname]], trace=trace,
-                                       jitter.factor=jitter.factor, seasonal=seasonal[[varname]],
-                                       multiyear=multiyear, n.multiyear=n.multiyear,
-                                       expand.multiyear=expand.multiyear, n.tau=tau[[varname]])
-                               }
-                            })
+                         # FIXME: 
+                         if(all(is.na(o.c), is.na(m.p))) {
+                           na.gcm
+                         } else {
+                           # consider the modeled values during the observed period separately
+                           dates.m.c <- gcm.time$vals[gcm.obs.subset.i]
+                           m.c <- m.p[gcm.obs.subset.i]
+                           tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=obs.time$vals,
+                                 dates.m.c=dates.m.c, dates.m.p=gcm.time$vals,
+                                 n.window=n.window, ratio=ratio[[varname]], trace=trace,
+                                 jitter.factor=jitter.factor, seasonal=seasonal[[varname]],
+                                 multiyear=multiyear, n.multiyear=n.multiyear,
+                                 expand.multiyear=expand.multiyear, n.tau=tau[[varname]])
+                         }
+                       },
+                       ij$i, ij$j)
 
         dim(m.p.chunk) <- c(gcm.time$n, xn, yn)
         print(dim(m.p.chunk))
