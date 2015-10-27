@@ -97,7 +97,6 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
                                         (dates.m.p[,1]%%n.multiyear)),
                                         length)
             n.thresh <- max(multiyear.lengths[-length(multiyear.lengths)])/2
-            print(n.thresh)
             incomplete <- names(which(multiyear.lengths < n.thresh))
             if(length(incomplete) > 0){
                 dates.m.p[dates.m.p[,1]==incomplete,1] <-
@@ -251,13 +250,13 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', obs$filename))
 
         o.c.chunk <- ncvar_get(obs, start=c(chunk['start'], 1, obs.time$t0),
-                               count=c(-1, chunk['length'], obs.time$n),
+                               count=c(chunk['length'], -1, obs.time$n),
                                varid=varname, collapse_degen=FALSE)
 
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', gcm$filename))
 
         m.p.chunk <- ncvar_get(gcm, start=c(chunk['start'], 1, gcm.time$t0),
-                               count=c(-1, chunk['length'], gcm.time$n),
+                               count=c(chunk['length'], -1, gcm.time$n),
                                varid=varname, collapse_degen=FALSE)
 
         xn <- dim(o.c.chunk)[1]
