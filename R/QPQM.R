@@ -250,12 +250,14 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
 
         print(paste('Bias correcting', varname, 'longitudes', chunk['start'], '-', chunk['stop'], '/', length(lon)))
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', obs$filename))
+        print(paste("... and reading latitudes 1 -", length(lat), '/', length(lat)))
 
         o.c.chunk <- ncvar_get(obs, start=c(chunk['start'], 1, obs.time$t0),
                                count=c(chunk['length'], -1, obs.time$n),
                                varid=varname, collapse_degen=FALSE)
 
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', gcm$filename))
+        print(paste("... and reading latitudes 1 -", length(lat), '/', length(lat)))
 
         m.p.chunk <- ncvar_get(gcm, start=c(chunk['start'], 1, gcm.time$t0),
                                count=c(chunk['length'], -1, gcm.time$n),
@@ -267,6 +269,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
 
         m.p.chunk <- mapply(
                        function(i, j) {
+                         print(paste(i, ',', j, '/', xn, ',', yn))
                          o.c <- o.c.chunk[i, j, ]
                          m.p <- m.p.chunk[i, j, ]
 
