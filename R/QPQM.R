@@ -31,17 +31,17 @@ QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
     # For ratio data, treat exact zeros as left censored values less than trace
     if(ratio){
         epsilon <- .Machine$double.eps
-        o.c[o.c < trace] <- runif(sum(o.c < trace), min=epsilon, max=trace)
-        m.c[m.c < trace] <- runif(sum(m.c < trace), min=epsilon, max=trace)
-        m.p[m.p < trace] <- runif(sum(m.p < trace), min=epsilon, max=trace)
-    }
+        o.c[o.c < trace & !is.na(o.c)] <- runif(sum(o.c < trace, na.rm=TRUE), min=epsilon, max=trace)
+        m.c[m.c < trace & !is.na(m.c)] <- runif(sum(m.c < trace, na.rm=TRUE), min=epsilon, max=trace)
+        m.p[m.p < trace & !is.na(m.p)] <- runif(sum(m.p < trace, na.rm=TRUE), min=epsilon, max=trace)
+      }
     # Calculate empirical quantiles using Weibull plotting position
     n <- max(length(o.c), length(m.c), length(m.p))
     if(is.null(n.tau)) n.tau <- n
     tau <- seq(1/(n+1), n/(n+1), length=n.tau)
-    quant.o.c <- quantile(o.c, tau, type=6)
-    quant.m.c <- quantile(m.c, tau, type=6)
-    quant.m.p <- quantile(m.p, tau, type=6)
+    quant.o.c <- quantile(o.c, tau, type=6, na.rm=TRUE)
+    quant.m.c <- quantile(m.c, tau, type=6, na.rm=TRUE)
+    quant.m.p <- quantile(m.p, tau, type=6, na.rm=TRUE)
     # Apply QPQM bias correction
     tau.m.p <- approx(quant.m.p, tau, m.p, rule=2)$y    
     if(ratio){
