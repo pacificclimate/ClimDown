@@ -99,6 +99,8 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
             n.thresh <- max(multiyear.lengths[-length(multiyear.lengths)])/2
             incomplete <- names(which(multiyear.lengths < n.thresh))
             if(length(incomplete) > 0){
+                # only consider the final block incomplete
+                incomplete <- incomplete[length(incomplete)]
                 dates.m.p[dates.m.p[,1]==incomplete,1] <-
                     max(dates.m.p[dates.m.p[,1]!=incomplete,1])
             }
