@@ -196,7 +196,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     tau <- list(pr=1001, tasmax=101, tasmin=101)
 
     seasonal <- list(pr=TRUE, tasmax=TRUE, tasmin=TRUE)
-    ratio <- seasonal
+    ratio <- list(pr=TRUE, tasmax=FALSE, tasmin=FALSE)
 
     # Read in the input and output files
     gcm <- nc_open(gcm.file)
