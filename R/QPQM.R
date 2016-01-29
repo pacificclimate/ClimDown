@@ -60,6 +60,36 @@ QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
     list(mhat.c=mhat.c, mhat.p=mhat.p)
 }
 
+mk.multiyear.factor <- function(dates, block.size, expand.multiyear=TRUE) {
+    years <- as.numeric(format(dates, '%Y'))
+
+    block.factor <- factor(years - years %% block.size)
+
+    if(expand.multiyear) {
+        # Fold incomplete data from the final block into the previous
+        # complete multi-year block
+        multiyear.lengths <- tapply(block.factor, block.factor, length)
+
+        n.thresh <- max(multiyear.lengths[-length(multiyear.lengths)])/2
+        # Is the final block less than half the length of other blocks?
+        if (multiyear.lengths[nlevels(block.factor)] < n.thresh) {
+            # Assign the final level to the value of the penultimate level
+            levels(block.factor)[nlevels(block.factor)] <- levels(block.factor)[nlevels(block.factor)-1]
+        }
+    }
+
+    # We'll run the computation on blocks of data that consist of the same month/season
+    # across multiple (e.g. 30) years
+    months.fact <- factor(format(dates, '%m'))
+    interaction(block.factor, months.fact, sep='-')
+}
+
+mk.annual.factor <- function(dates) {
+    years <- as.numeric(format(dates, '%Y'))
+    months.fact <- factor(format(dates, '%m'))
+    interaction(block.factor, months.fact, sep='-')
+}
+
 tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
                   n.window=30, ratio=TRUE, trace=0.05,
                   jitter.factor=0.01, seasonal=TRUE, multiyear=FALSE,
@@ -69,7 +99,7 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
     # or single months, both over (sliding) blocks of n.window years or
     # multi-year chunks of years
     # o = vector of observed values; m = vector of modelled values
-    # dates = matrix of dates with integer year, month, day columns
+    # dates = vector of PCICt dates
     # c = current period;  p = projected period
     # n.window = window length for blocks
     # ratio = TRUE --> preserve relative trends in a ratio variable
@@ -81,51 +111,36 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
     # expand.multiyear --> fold incomplete multi-year block into previous
     # n.tau = NULL --> number of empirical quantiles (NULL=sample length)
     require(foreach)
-    dates.m.p <- data.frame(year=as.numeric(format(dates.m.p, '%Y')), month=as.numeric(format(dates.m.p, '%m')))
-    dates.o.c <- data.frame(year=as.numeric(format(dates.o.c, '%Y')), month=as.numeric(format(dates.o.c, '%m')))
-    dates.m.c <- data.frame(year=as.numeric(format(dates.m.c, '%Y')), month=as.numeric(format(dates.m.c, '%m')))
-    months <- unique(dates.m.p[,2])
 
     if (multiyear) {
-        # Apply QPQM to multi-year blocks of length n.multiyear
-        dates.m.p[,1] <- dates.m.p[,1]-(dates.m.p[,1]%%n.multiyear)
-        if(expand.multiyear){
-            # Fold incomplete data from the final block into the previous
-            # complete multi-year block
-            multiyear.lengths <- sapply(split(dates.m.p[,1],
-                                        dates.m.p[,1] -
-                                        (dates.m.p[,1]%%n.multiyear)),
-                                        length)
-            n.thresh <- max(multiyear.lengths[-length(multiyear.lengths)])/2
-            incomplete <- names(which(multiyear.lengths < n.thresh))
-            if(length(incomplete) > 0){
-                # only consider the final block incomplete
-                incomplete <- incomplete[length(incomplete)]
-                dates.m.p[dates.m.p[,1]==incomplete,1] <-
-                    max(dates.m.p[dates.m.p[,1]!=incomplete,1])
-            }
-        }
-        chunks <- unique(dates.m.p[,1])
-        years <- seq_along(chunks)
-        for(i in seq_along(years))
-            dates.m.p[dates.m.p[,1]==chunks[i],1] <- i
+        date.factor <- mk.multiyear.factor(dates.m.p, n.multiyear, expand.multiyear)
+        mc.date.factor <- mk.multiyear.factor(dates.m.c, n.multiyear, expand.multiyear)
+        oc.date.factor <- mk.multiyear.factor(dates.o.c, n.multiyear, expand.multiyear)
     } else{
-        years <- unique(dates.m.p[,1])
+        date.factor <- mk.annual.factor(dates.m.p)
     }
-    dplus <- dminus <- floor(n.window/2)
-    dplus <- ifelse((dplus+dminus)==n.window, dplus-1, dplus)
+
+    # We'll run the computation on blocks of data that consist of the same month/season
+    # and maybe across multiple (e.g. 30) years (if multiyear is TRUE)
+    mhat.list <- lapply(levels(date.factor), function(level) {
+        mp.subset <- m.p[date.factor == level]
+        oc.subset <- o.c[oc.date.factor == level]
+        mc.subset <- m.c[mc.date.factor == level]
+
+        qpqm <- QPQM(o.c=oc.subset, m.c=mc.subset,
+                     m.p=mp.subset, ratio=ratio,
+                     trace=trace, jitter.factor=jitter.factor,
+                     n.tau=n.tau)
+        qpqm$mhat.p
+    })
+    mhat.p <- m.p*NA
+    for (i in seq_along(mhat.list)) {
+      mhat.p[date.factor == levels(date.factor)[i]] <- mhat.list[[i]]
+    }
+
+    return(mhat.p)
 
     mhat.list <- lapply(years, function(year) {
-        start <- max(years[1], year-dminus)
-        end <- min(years[length(years)], year+dplus)
-        if((end-start+1) < n.window){
-            dyears <- (n.window-(end-start+1))
-            if(start==years[1]){
-                end <- end + dyears
-            } else{
-                start <- start - dyears
-            }
-        }
         cases.p <- mhat.p <- c()
         for(month in months){
             # Current month
@@ -133,7 +148,7 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
             cases.m.c <- which(dates.m.c[,2] %in% month)
             cases.window <- which((dates.m.p[,1] %in% start:end) &
                                   (dates.m.p[,2] %in% month))
-            if(seasonal){
+            if(seasonal) {
                 # Previous month-1
                 month.m1 <- ifelse((month-1)==(min(months)-1),
                                    max(months), month-1)
@@ -158,14 +173,6 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
                 cases.mhat.p <- which(dates.m.p[cases.window,1] %in% year)
                 mhat.year <- qpqm$mhat.p[1:length(m.p[cases.window])
                                         ][cases.mhat.p]
-            } else{
-                # Bias correction by individual month
-                qpqm <- QPQM(o.c=o.c[cases.o.c], m.c=m.c[cases.m.c],
-                             m.p=m.p[cases.window], ratio=ratio,
-                             trace=trace, jitter.factor=jitter.factor,
-                             n.tau=n.tau)
-                cases.mhat.p <- which(dates.m.p[cases.window,1] %in% year)
-                mhat.year <- qpqm$mhat.p[cases.mhat.p]
             }
             cases.p <- c(cases.p, which((dates.m.p[,1] %in% year) &
                          (dates.m.p[,2] %in% month)))
@@ -173,11 +180,7 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
         }
         list(cases.p=cases.p, mhat.p=mhat.p)
     })
-    mhat.p <- m.p*NA
-    for(i in seq_along(mhat.list))
-        mhat.p[mhat.list[[i]]$cases.p] <- mhat.list[[i]]$mhat.p
-    mhat.p
-}
+
 
 qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
     ptm <- proc.time()
