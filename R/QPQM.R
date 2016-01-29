@@ -149,12 +149,7 @@ tQPQM <- function(o.c, m.c, m.p,
                    mc.subset=split(m.c, m.c.factor)
                    )
 
-    mhat.p <- m.p*NA
-    for (i in seq_along(mhat.list)) {
-      mhat.p[m.p.factor == levels(m.p.factor)[i]] <- mhat.list[[i]]
-    }
-
-    return(mhat.p)
+    return(unsplit(mhat.list, m.p.factor))
 
     mhat.list <- lapply(years, function(year) {
         cases.p <- mhat.p <- c()
