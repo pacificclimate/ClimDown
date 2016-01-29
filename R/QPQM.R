@@ -90,18 +90,40 @@ mk.annual.factor <- function(dates) {
     interaction(block.factor, months.fact, sep='-')
 }
 
-tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
+mk.factor.set <- function(o.c.dates, m.c.dates, m.p.dates,
+                          multiyear=FALSE, seasonal=TRUE,
+                          n.multiyear=10, expand.multiyear=TRUE) {
+    if (seasonal) {
+      stop("Seasonal sliding window is not presently implenented")
+    }
+
+    if (multiyear) {
+        list(
+            oc = mk.multiyear.factor(o.c.dates, n.multiyear, expand.multiyear),
+            mc = mk.multiyear.factor(m.c.dates, n.multiyear, expand.multiyear),
+            mp = mk.multiyear.factor(m.p.dates, n.multiyear, expand.multiyear)
+        )
+    } else{
+        list(
+            oc = mk.annual.factor(o.c.dates),
+            mc = mk.annual.factor(m.c.dates),
+            mp = mk.annual.factor(m.p.dates)
+        )
+    }
+}
+
+tQPQM <- function(o.c, m.c, m.p,
+                  o.c.factor, m.c.factor, m.p.factor,
                   n.window=30, ratio=TRUE, trace=0.05,
-                  jitter.factor=0.01, seasonal=TRUE, multiyear=FALSE,
-                  n.multiyear=10, expand.multiyear=TRUE, n.tau=NULL)
+                  jitter.factor=0.01, n.tau=NULL)
 {
     # Apply QPQM bias correction over 3-month moving windows (seasonal=TRUE)
     # or single months, both over (sliding) blocks of n.window years or
     # multi-year chunks of years
     # o = vector of observed values; m = vector of modelled values
-    # dates = vector of PCICt dates
     # c = current period;  p = projected period
-    # n.window = window length for blocks
+    # *.factor = date factors for grouping values together, levels should
+    # be the same in each of the three factors
     # ratio = TRUE --> preserve relative trends in a ratio variable
     # trace = 0.05 --> treat values below trace as left censored
     # jitter.factor = 0.01 --> jittering to accomodate ties
@@ -112,30 +134,24 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
     # n.tau = NULL --> number of empirical quantiles (NULL=sample length)
     require(foreach)
 
-    if (multiyear) {
-        date.factor <- mk.multiyear.factor(dates.m.p, n.multiyear, expand.multiyear)
-        mc.date.factor <- mk.multiyear.factor(dates.m.c, n.multiyear, expand.multiyear)
-        oc.date.factor <- mk.multiyear.factor(dates.o.c, n.multiyear, expand.multiyear)
-    } else{
-        date.factor <- mk.annual.factor(dates.m.p)
-    }
-
     # We'll run the computation on blocks of data that consist of the same month/season
     # and maybe across multiple (e.g. 30) years (if multiyear is TRUE)
-    mhat.list <- lapply(levels(date.factor), function(level) {
-        mp.subset <- m.p[date.factor == level]
-        oc.subset <- o.c[oc.date.factor == level]
-        mc.subset <- m.c[mc.date.factor == level]
+    mhat.list <- mapply(
+                   function(mp.subset, oc.subset, mc.subset) {
+                     qpqm <- QPQM(o.c=oc.subset, m.c=mc.subset,
+                                  m.p=mp.subset, ratio=ratio,
+                                  trace=trace, jitter.factor=jitter.factor,
+                                  n.tau=n.tau)
+                     qpqm$mhat.p
+                   },
+                   mp.subset=split(m.p, m.p.factor),
+                   oc.subset=split(o.c, o.c.factor),
+                   mc.subset=split(m.c, m.c.factor)
+                   )
 
-        qpqm <- QPQM(o.c=oc.subset, m.c=mc.subset,
-                     m.p=mp.subset, ratio=ratio,
-                     trace=trace, jitter.factor=jitter.factor,
-                     n.tau=n.tau)
-        qpqm$mhat.p
-    })
     mhat.p <- m.p*NA
     for (i in seq_along(mhat.list)) {
-      mhat.p[date.factor == levels(date.factor)[i]] <- mhat.list[[i]]
+      mhat.p[m.p.factor == levels(m.p.factor)[i]] <- mhat.list[[i]]
     }
 
     return(mhat.p)
@@ -180,6 +196,7 @@ tQPQM <- function(o.c, m.c, m.p, dates.o.c, dates.m.c, dates.m.p,
         }
         list(cases.p=cases.p, mhat.p=mhat.p)
     })
+}
 
 
 qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
@@ -238,6 +255,13 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     # indices for gcm time that are within the observational time range
     gcm.obs.subset.i <- gcm.time$vals > as.PCICt(cstart, attr(gcm.time$vals, 'cal')) & gcm.time$vals < as.PCICt(cend, attr(gcm.time$vals, 'cal'))
 
+    # Calculate the time factors outside of the main spatial loop
+    time.factors <- mk.factor.set(obs.time$vals,
+                                  gcm.time$vals[gcm.obs.subset.i],
+                                  gcm.time$vals,
+                                  multiyear=multiyear, seasonal=FALSE,
+                                  n.multiyear=n.multiyear, expand.multiyear=expand.multiyear
+                                  )
 
     na.gcm <- rep(NA, gcm.time$n)
 
@@ -281,14 +305,15 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
                            na.gcm
                          } else {
                            # consider the modeled values during the observed period separately
-                           dates.m.c <- gcm.time$vals[gcm.obs.subset.i]
-                           m.c <- m.p[gcm.obs.subset.i]
-                           tQPQM(o.c=o.c, m.c=m.c, m.p=m.p, dates.o.c=obs.time$vals,
-                                 dates.m.c=dates.m.c, dates.m.p=gcm.time$vals,
-                                 n.window=n.window, ratio=ratio[[varname]], trace=trace,
-                                 jitter.factor=jitter.factor, seasonal=seasonal[[varname]],
-                                 multiyear=multiyear, n.multiyear=n.multiyear,
-                                 expand.multiyear=expand.multiyear, n.tau=tau[[varname]])
+                           # m.c <- m.p[gcm.obs.subset.i]
+
+                           tQPQM(o.c=o.c, m.c=m.p[gcm.obs.subset.i], m.p=m.p,
+                                 time.factors$oc,
+                                 time.factors$mc,
+                                 time.factors$mp,
+                                 ratio=ratio[[varname]], trace=trace,
+                                 jitter.factor=jitter.factor,
+                                 n.tau=tau[[varname]])
                          }
                        },
                        ij$i, ij$j)
