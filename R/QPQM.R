@@ -58,10 +58,9 @@ QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
     mhat.c <- approx(quant.m.c, quant.o.c, m.c, rule=2)$y
     # For ratio data, set values less than trace to zero
     if(ratio){
-        mhat.c[mhat.c < trace] <- 0
         mhat.p[mhat.p < trace] <- 0
     }
-    list(mhat.c=mhat.c, mhat.p=mhat.p)
+    mhat.p
 }
 
 mk.multiyear.factor <- function(dates, block.size, expand.multiyear=TRUE) {
@@ -157,11 +156,10 @@ tQPQM <- function(o.c, m.c, m.p,
     mc.by.month <- split(m.c, m.c.factor)
     mhat.list <- mapply(
                    function(mp.subset, month) {
-                     qpqm <- QPQM(o.c=oc.by.month[[month]], m.c=mc.by.month[[month]],
-                                  m.p=mp.subset, ratio=ratio,
-                                  trace=trace, jitter.factor=jitter.factor,
-                                  n.tau=n.tau)
-                     qpqm$mhat.p
+                       QPQM(o.c=oc.by.month[[month]], m.c=mc.by.month[[month]],
+                            m.p=mp.subset, ratio=ratio,
+                            trace=trace, jitter.factor=jitter.factor,
+                            n.tau=n.tau)
                    },
                    mp.subset=sections,
                    months
