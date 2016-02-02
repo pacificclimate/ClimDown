@@ -81,16 +81,11 @@ mk.multiyear.factor <- function(dates, block.size, expand.multiyear=TRUE) {
         }
     }
 
-    # We'll run the computation on blocks of data that consist of the same month/season
-    # across multiple (e.g. 30) years
-    months.fact <- factor(format(dates, '%m'))
-    interaction(block.factor, months.fact, sep='-')
+    block.factor
 }
 
 mk.annual.factor <- function(dates) {
-    years <- as.numeric(format(dates, '%Y'))
-    months.fact <- factor(format(dates, '%m'))
-    interaction(block.factor, months.fact, sep='-')
+    factor(format(dates, '%Y'))
 }
 
 mk.monthly.factor <- function(dates) {
@@ -108,13 +103,13 @@ mk.factor.set <- function(o.c.dates, m.c.dates, m.p.dates,
         list(
             oc = mk.monthly.factor(o.c.dates),
             mc = mk.monthly.factor(m.c.dates),
-            mp = mk.multiyear.factor(m.p.dates, n.multiyear, expand.multiyear)
+            mp = interaction(mk.multiyear.factor(m.p.dates, n.multiyear, expand.multiyear), mk.monthly.factor(m.p.dates), sep='-')
         )
     } else{
         list(
             oc = mk.monthly.factor(o.c.dates),
             mc = mk.monthly.factor(m.c.dates),
-            mp = mk.annual.factor(m.p.dates)
+            mp = interaction(mk.annual.factor(m.p.dates), mk.monthly.factor(m.p.dates), sep='-')
         )
     }
 }
