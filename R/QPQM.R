@@ -285,8 +285,8 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
                                count=c(chunk['length'], -1, gcm.time$n),
                                varid=varname, collapse_degen=FALSE)
 
-        yn <- dim(o.c.chunk)[1]
-        xn <- dim(o.c.chunk)[2]
+        xn <- dim(o.c.chunk)[1]
+        yn <- dim(o.c.chunk)[2]
         ij <- expand.grid(i=seq(xn), j=seq(yn))
 
         m.p.chunk <- mapply(
