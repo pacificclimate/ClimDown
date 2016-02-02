@@ -167,48 +167,7 @@ tQPQM <- function(o.c, m.c, m.p,
                    months
                    )
 
-    return(unsplit(mhat.list, m.p.factor))
-
-    mhat.list <- lapply(years, function(year) {
-        cases.p <- mhat.p <- c()
-        for(month in months){
-            # Current month
-            cases.o.c <- which(dates.o.c[,2] %in% month)
-            cases.m.c <- which(dates.m.c[,2] %in% month)
-            cases.window <- which((dates.m.p[,1] %in% start:end) &
-                                  (dates.m.p[,2] %in% month))
-            if(seasonal) {
-                # Previous month-1
-                month.m1 <- ifelse((month-1)==(min(months)-1),
-                                   max(months), month-1)
-                cases.o.c.m1 <- which(dates.o.c[,2] %in% month.m1)
-                cases.m.c.m1 <- which(dates.m.c[,2] %in% month.m1)
-                cases.window.m1 <- which((dates.m.p[,1] %in% start:end) &
-                                         (dates.m.p[,2] %in% month.m1))
-                # Next month+1
-                month.p1 <- ifelse((month+1)==(max(months)+1),
-                                   min(months), month+1)
-                cases.o.c.p1 <- which(dates.o.c[,2] %in% month.p1)
-                cases.m.c.p1 <- which(dates.m.c[,2] %in% month.p1)
-                cases.window.p1 <- which((dates.m.p[,1] %in% start:end) &
-                                         (dates.m.p[,2] %in% month.p1))
-                # Bias correction for centre month of seasonal window
-                qpqm <- QPQM(o.c=c(o.c[cases.o.c], o.c[cases.o.c.m1],
-                             o.c[cases.o.c.p1]), m.c=c(m.c[cases.m.c],
-                             m.c[cases.m.c.m1], m.c[cases.m.c.p1]),
-                             m.p=c(m.p[cases.window], m.p[cases.window.m1],
-                             m.p[cases.window.p1]), ratio=ratio, trace=trace,
-                             jitter.factor=jitter.factor, n.tau=n.tau)
-                cases.mhat.p <- which(dates.m.p[cases.window,1] %in% year)
-                mhat.year <- qpqm$mhat.p[1:length(m.p[cases.window])
-                                        ][cases.mhat.p]
-            }
-            cases.p <- c(cases.p, which((dates.m.p[,1] %in% year) &
-                         (dates.m.p[,2] %in% month)))
-            mhat.p <- c(mhat.p, mhat.year)
-        }
-        list(cases.p=cases.p, mhat.p=mhat.p)
-    })
+    unsplit(mhat.list, m.p.factor)
 }
 
 
