@@ -25,6 +25,9 @@ QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
     #
     # Apply a small amount of jitter to accomodate ties due to limited
     # measurement precision
+    if (all(is.na(m.p))) {
+      return(list(mhat.c=NULL, mhat.p=rep(NA, length(m.p))))
+    }
     o.c <- jitter(o.c, jitter.factor)
     m.c <- jitter(m.c, jitter.factor)
     m.p <- jitter(m.p, jitter.factor)
@@ -90,6 +93,10 @@ mk.annual.factor <- function(dates) {
     interaction(block.factor, months.fact, sep='-')
 }
 
+mk.monthly.factor <- function(dates) {
+  factor(format(dates, '%m'))
+}
+
 mk.factor.set <- function(o.c.dates, m.c.dates, m.p.dates,
                           multiyear=FALSE, seasonal=TRUE,
                           n.multiyear=10, expand.multiyear=TRUE) {
@@ -99,14 +106,14 @@ mk.factor.set <- function(o.c.dates, m.c.dates, m.p.dates,
 
     if (multiyear) {
         list(
-            oc = mk.multiyear.factor(o.c.dates, n.multiyear, expand.multiyear),
-            mc = mk.multiyear.factor(m.c.dates, n.multiyear, expand.multiyear),
+            oc = mk.monthly.factor(o.c.dates),
+            mc = mk.monthly.factor(m.c.dates),
             mp = mk.multiyear.factor(m.p.dates, n.multiyear, expand.multiyear)
         )
     } else{
         list(
-            oc = mk.annual.factor(o.c.dates),
-            mc = mk.annual.factor(m.c.dates),
+            oc = mk.monthly.factor(o.c.dates),
+            mc = mk.monthly.factor(m.c.dates),
             mp = mk.annual.factor(m.p.dates)
         )
     }
@@ -136,17 +143,20 @@ tQPQM <- function(o.c, m.c, m.p,
 
     # We'll run the computation on blocks of data that consist of the same month/season
     # and maybe across multiple (e.g. 30) years (if multiyear is TRUE)
+    sections <- split(m.p, m.p.factor)
+    months <- sub('^[0-9]+-', '', names(sections))
+    oc.by.month <- split(o.c, o.c.factor)
+    mc.by.month <- split(m.c, m.c.factor)
     mhat.list <- mapply(
-                   function(mp.subset, oc.subset, mc.subset) {
-                     qpqm <- QPQM(o.c=oc.subset, m.c=mc.subset,
+                   function(mp.subset, month) {
+                     qpqm <- QPQM(o.c=oc.by.month[[month]], m.c=mc.by.month[[month]],
                                   m.p=mp.subset, ratio=ratio,
                                   trace=trace, jitter.factor=jitter.factor,
                                   n.tau=n.tau)
                      qpqm$mhat.p
                    },
-                   mp.subset=split(m.p, m.p.factor),
-                   oc.subset=split(o.c, o.c.factor),
-                   mc.subset=split(m.c, m.c.factor)
+                   mp.subset=sections,
+                   months
                    )
 
     return(unsplit(mhat.list, m.p.factor))
