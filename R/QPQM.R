@@ -7,6 +7,7 @@ library(ncdf4)
 library(abind)
 library(PCICt)
 library(iterators)
+library(seas)
 
 QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
                  n.tau=NULL)
@@ -92,24 +93,36 @@ mk.monthly.factor <- function(dates) {
   factor(format(dates, '%m'))
 }
 
+mk.seasonal.factor <- function(dates) {
+    cal <- attr(dates, 'cal')
+    # PCICt can possibly omit the "_day" on the cal attribute. Add it back.
+    cal <- sub('^(360|365)$', '\\1_day', cal)
+    if (cal == "proleptic_gregorian") { cal <- NULL}
+    jday <- as.integer(format(dates, '%j'))
+    years <- as.integer(format(dates, '%Y'))
+    mkseas(jday, 'DJF', calendar=cal, year=years)
+}
+
 mk.factor.set <- function(o.c.dates, m.c.dates, m.p.dates,
                           multiyear=FALSE, seasonal=TRUE,
                           n.multiyear=10, expand.multiyear=TRUE) {
     if (seasonal) {
-      stop("Seasonal sliding window is not presently implenented")
+        mk.factor <- mk.seasonal.factor
+    } else {
+        mk.factor <- mk.monthly.factor
     }
 
     if (multiyear) {
         list(
-            oc = mk.monthly.factor(o.c.dates),
-            mc = mk.monthly.factor(m.c.dates),
-            mp = interaction(mk.multiyear.factor(m.p.dates, n.multiyear, expand.multiyear), mk.monthly.factor(m.p.dates), sep='-')
+            oc = mk.factor(o.c.dates),
+            mc = mk.factor(m.c.dates),
+            mp = interaction(mk.multiyear.factor(m.p.dates, n.multiyear, expand.multiyear), mk.factor(m.p.dates), sep='-')
         )
     } else{
         list(
-            oc = mk.monthly.factor(o.c.dates),
-            mc = mk.monthly.factor(m.c.dates),
-            mp = interaction(mk.annual.factor(m.p.dates), mk.monthly.factor(m.p.dates), sep='-')
+            oc = mk.factor(o.c.dates),
+            mc = mk.factor(m.c.dates),
+            mp = interaction(mk.annual.factor(m.p.dates), mk.factor(m.p.dates), sep='-')
         )
     }
 }
@@ -259,7 +272,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     time.factors <- mk.factor.set(obs.time$vals,
                                   gcm.time$vals[gcm.obs.subset.i],
                                   gcm.time$vals,
-                                  multiyear=multiyear, seasonal=FALSE,
+                                  multiyear=multiyear, seasonal=seasonal[[varname]],
                                   n.multiyear=n.multiyear, expand.multiyear=expand.multiyear
                                   )
 
