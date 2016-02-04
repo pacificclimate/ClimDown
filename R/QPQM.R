@@ -3,12 +3,6 @@
 # interval data. Alex Cannon (acannon@uvic.ca)
 ################################################################################
 
-library(ncdf4)
-library(abind)
-library(PCICt)
-library(iterators)
-library(seas)
-
 QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
                  n.tau=NULL)
 {
