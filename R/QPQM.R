@@ -194,11 +194,6 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     gcm <- nc_open(gcm.file)
     obs <- nc_open(obs.file)
 
-    cat('Creating output file', out.file, '\n')
-    dims <- gcm$var[[varname]]$dim
-    vars <- ncvar_def(varname, gcm$var[[varname]]$units, dims)
-    out <- nc_create(out.file, vars)
-
     lat <- gcm$dim$lat$vals
     lon <- gcm$dim$lon$vals
 
@@ -234,6 +229,11 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
                                   multiyear=multiyear, seasonal=seasonal[[varname]],
                                   n.multiyear=n.multiyear, expand.multiyear=expand.multiyear
                                   )
+    cat('Creating output file', out.file, '\n')
+    # FIXME: The GCM time needs to be clipped to cstart
+    dims <- gcm$var[[varname]]$dim
+    vars <- ncvar_def(varname, gcm$var[[varname]]$units, dims)
+    out <- nc_create(out.file, vars)
 
     na.gcm <- rep(NA, gcm.time$n)
 
