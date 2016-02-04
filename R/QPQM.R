@@ -147,7 +147,6 @@ tQPQM <- function(o.c, m.c, m.p,
     # n.multiyear = 10 --> if multiyear==TRUE, apply to n.multiyear chunks
     # expand.multiyear --> fold incomplete multi-year block into previous
     # n.tau = NULL --> number of empirical quantiles (NULL=sample length)
-    require(foreach)
 
     # We'll run the computation on blocks of data that consist of the same month/season
     # and maybe across multiple (e.g. 30) years (if multiyear is TRUE)
@@ -233,6 +232,9 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     chunk.lon.indices <- chunk.indices(length(lon), chunk.size)
     n.chunks <- length(chunk.lon.indices)
 
+    registerDoParallel(cores=getOption('mc.cores'))
+
+    # I/O loop (read, compute, write)
     for (chunk in chunk.lon.indices) {
 
         print(paste('Bias correcting', varname, 'longitudes', chunk['start'], '-', chunk['stop'], '/', length(lon)))
@@ -254,8 +256,9 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         yn <- dim(o.c.chunk)[2]
         ij <- expand.grid(i=seq(xn), j=seq(yn))
 
-        m.p.chunk <- mapply(
-                       function(i, j) {
+        # Compute loop. Cell major. Do something to a timeseries for each cell.
+        m.p.chunk <- foreach(i=ij$i, j=ij$j, .combine=c, .multicombine=TRUE, .inorder=TRUE) %dopar% {
+
                          print(paste(i, ',', j, '/', xn, ',', yn))
                          o.c <- o.c.chunk[i, j, ]
                          m.p <- m.p.chunk[i, j, ]
@@ -276,8 +279,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
                                  jitter.factor=getOption('jitter.factor'),
                                  n.tau=getOption('tau')[[varname]])
                          }
-                       },
-                       ij$i, ij$j)
+                       }
 
         dim(m.p.chunk) <- c(gcm.time$n, xn, yn)
         print(dim(m.p.chunk))
@@ -290,6 +292,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         gc()
     }
 
+    stopImplicitCluster()
 
     print("Closing up the input and output files")
     nc_close(gcm)
