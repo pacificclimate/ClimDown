@@ -194,10 +194,10 @@ nc_gety <- function(nc) {
 bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
 
     nc.gcm <- nc_open(gcm.file)
-    gcm <- ncvar_get(nc.gcm, varid)
+    gcm <- ncvar_get(nc.gcm, varname)
     gcm.lats <- nc_gety(nc.gcm)
     gcm.lons <- nc_getx(nc.gcm)
-    units <- ncatt_get(nc.gcm, varid, 'units')$value
+    units <- ncatt_get(nc.gcm, varname, 'units')$value
     gcm <- ud.convert(gcm, units, target.units[varname])
     gcm.times <- netcdf.calendar(nc.gcm)
 
@@ -226,6 +226,9 @@ bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     monthly.climatologies <- chunked.factored.running.mean(nc.obs, monthly.factor, varname, nt.per.chunk)
     
     nc_close(nc.obs)
+
+    print('Calculating the monthly factor across the GCM time series')
+    monthly.factor <- factor(as.numeric(format(gcm.times, '%m')))
 
     print('Adding the monthly climatologies to the interpolated GCM')
     apply.climatologies.nc(output.nc, monthly.climatologies, monthly.factor, varname, nt.per.chunk)
