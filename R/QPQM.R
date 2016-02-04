@@ -170,65 +170,54 @@ tQPQM <- function(o.c, m.c, m.p,
     unsplit(mhat.list, m.p.factor)
 }
 
+compute.time.stats <- function(nc, start=NULL, end=NULL) {
+  vals <- netcdf.calendar(nc, 'time')
+  if (is.null(start)) {
+    start <- vals[1]
+  }
+  if (is.null(end)) {
+    end <- vals[length(vals)]
+  }
+  t0 <- as.PCICt(start, cal=attr(vals, 'cal'))
+  tn <- as.PCICt(end, cal=attr(vals, 'cal'))
+  i <- vals >= t0 & vals <= tn
+  vals <- vals[i]
+  list(vals=vals,
+       i=i,
+       t0=min(which(i)),
+       tn=max(which(i)),
+       n=length(vals)
+       )
+}
 
 qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
     ptm <- proc.time()
 
-    # FIXME: Parametrize all of this
-    n.window <- 1
-    multiyear <- TRUE
-    expand.multiyear <- TRUE
-    n.multiyear <- 30
-    trace <- 0.005
-    jitter.factor <- 0.01
-    cstart <- as.POSIXct('1971-01-01', tz='GMT')
-    cend <- as.POSIXct('2000-12-31', tz='GMT')
-    n.chunks <- 500
+    cstart <- getOption('cstart')
+    cend <- getOption('cend')
 
-    tau <- list(pr=1001, tasmax=101, tasmin=101)
-
-    seasonal <- list(pr=TRUE, tasmax=TRUE, tasmin=TRUE)
-    ratio <- list(pr=TRUE, tasmax=FALSE, tasmin=FALSE)
-
-    # Read in the input and output files
+    print("Opening the input files and reading metadata")
     gcm <- nc_open(gcm.file)
     obs <- nc_open(obs.file)
 
     lat <- gcm$dim$lat$vals
     lon <- gcm$dim$lon$vals
 
-    compute.time.stats <- function(nc, start=NULL, end=NULL) {
-        vals <- netcdf.calendar(nc, 'time')
-        if (is.null(start)) {
-          start <- vals[1]
-        }
-        if (is.null(end)) {
-          end <- vals[length(vals)]
-        }
-        t0 <- as.PCICt(start, cal=attr(vals, 'cal'))
-        tn <- as.PCICt(end, cal=attr(vals, 'cal'))
-        i <- vals >= t0 & vals <= tn
-        vals <- vals[i]
-        list(vals=vals,
-             i=i,
-             t0=min(which(i)),
-             tn=max(which(i)),
-             n=length(vals)
-             )
-    }
-
     gcm.time <- compute.time.stats(gcm, cstart)
     obs.time <- compute.time.stats(obs, cstart, cend)
     # indices for gcm time that are within the observational time range
     gcm.obs.subset.i <- gcm.time$vals > as.PCICt(cstart, attr(gcm.time$vals, 'cal')) & gcm.time$vals < as.PCICt(cend, attr(gcm.time$vals, 'cal'))
 
-    # Calculate the time factors outside of the main spatial loop
+    print("Calculating the time factors outside in order to subdivide the problem space")
     time.factors <- mk.factor.set(obs.time$vals,
                                   gcm.time$vals[gcm.obs.subset.i],
                                   gcm.time$vals,
-                                  multiyear=multiyear, seasonal=seasonal[[varname]],
-                                  n.multiyear=n.multiyear, expand.multiyear=expand.multiyear
+                                  multiyear=getOption('multiyear'),
+                                  seasonal=getOption('seasonal')[[varname]],
+                                  n.multiyear=getOption('multiyear.window.length'),
+                                  expand.multiyear=getOption('expand.multiyear')
                                   )
+
     cat('Creating output file', out.file, '\n')
     # FIXME: The GCM time needs to be clipped to cstart
     dims <- gcm$var[[varname]]$dim
@@ -245,7 +234,6 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     n.chunks <- length(chunk.lon.indices)
 
     for (chunk in chunk.lon.indices) {
-        print(sort( sapply(ls(),function(x){object.size(get(x))})))
 
         print(paste('Bias correcting', varname, 'longitudes', chunk['start'], '-', chunk['stop'], '/', length(lon)))
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', obs$filename))
@@ -283,9 +271,10 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
                                  time.factors$oc,
                                  time.factors$mc,
                                  time.factors$mp,
-                                 ratio=ratio[[varname]], trace=trace,
-                                 jitter.factor=jitter.factor,
-                                 n.tau=tau[[varname]])
+                                 ratio=getOption('ratio')[[varname]],
+                                 trace=getOption('trace'),
+                                 jitter.factor=getOption('jitter.factor'),
+                                 n.tau=getOption('tau')[[varname]])
                          }
                        },
                        ij$i, ij$j)
@@ -297,13 +286,12 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         print(paste("Writing chunk", chunk['start'], '-', chunk['stop'], '/', length(lon), 'to file:', out$filename))
         ncvar_put(nc=out, varid=varname, vals=m.p.chunk,
                   start=c(chunk['start'], 1, 1), count=dim(m.p.chunk))
-        #print(object.size(x=lapply(ls(), get)), units="Mb")
         rm(o.c.chunk, m.p.chunk)
         gc()
-        #print(sort( sapply(ls(),function(x){object.size(get(x))})))
     }
 
 
+    print("Closing up the input and output files")
     nc_close(gcm)
     nc_close(obs)
     nc_close(out)
