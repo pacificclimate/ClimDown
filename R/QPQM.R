@@ -226,8 +226,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     chunk.lon.indices <- chunk.indices(length(lon), chunk.size)
     n.chunks <- length(chunk.lon.indices)
 
-    registerDoParallel(cores=getOption('mc.cores'))
-
+    be <- start.par.backend()
     # I/O loop (read, compute, write)
     for (chunk in chunk.lon.indices) {
 
@@ -250,43 +249,41 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         yn <- dim(o.c.chunk)[2]
         ij <- expand.grid(i=seq(xn), j=seq(yn))
 
+        ncells <- xn*yn
+
         # Compute loop. Cell major. Do something to a timeseries for each cell.
-        m.p.chunk <- foreach(i=ij$i, j=ij$j, .combine=c, .multicombine=TRUE, .inorder=TRUE) %dopar% {
+        print(paste("Computing QPQM on", ncells, "cells"))
+        m.p.chunk <- foreach(o.c=split(o.c.chunk, 1:ncells),
+                             m.p=split(m.p.chunk, 1:ncells),
+                             .combine=c, .multicombine=TRUE, .inorder=TRUE,
+                             .export=c('na.gcm', 'tQPQM', 'varname', 'gcm.obs.subset.i', 'time.factors', 'QPQM')) %loop% {
 
-                         print(paste(i, ',', j, '/', xn, ',', yn))
-                         o.c <- o.c.chunk[i, j, ]
-                         m.p <- m.p.chunk[i, j, ]
-
-                         # FIXME: 
-                         if(all(is.na(o.c), is.na(m.p))) {
-                           na.gcm
-                         } else {
-                           # consider the modeled values during the observed period separately
-                           # m.c <- m.p[gcm.obs.subset.i]
-
-                           tQPQM(o.c=o.c, m.c=m.p[gcm.obs.subset.i], m.p=m.p,
-                                 time.factors$oc,
-                                 time.factors$mc,
-                                 time.factors$mp,
-                                 ratio=getOption('ratio')[[varname]],
-                                 trace=getOption('trace'),
-                                 jitter.factor=getOption('jitter.factor'),
-                                 n.tau=getOption('tau')[[varname]])
-                         }
-                       }
+          if(all(is.na(o.c), is.na(m.p))) {
+            na.gcm
+          } else {
+            # consider the modeled values during the observed period separately
+            # m.c <- m.p[gcm.obs.subset.i]
+            tQPQM(o.c=o.c, m.c=m.p[gcm.obs.subset.i], m.p=m.p,
+                  time.factors$oc,
+                  time.factors$mc,
+                  time.factors$mp,
+                  ratio=getOption('ratio')[[varname]],
+                  trace=getOption('trace'),
+                  jitter.factor=getOption('jitter.factor'),
+                  n.tau=getOption('tau')[[varname]])
+          }
+        }
 
         dim(m.p.chunk) <- c(gcm.time$n, xn, yn)
-        print(dim(m.p.chunk))
         m.p.chunk <- aperm(m.p.chunk, c(2, 3, 1))
-        print(dim(m.p.chunk))
+
         print(paste("Writing chunk", chunk['start'], '-', chunk['stop'], '/', length(lon), 'to file:', out$filename))
         ncvar_put(nc=out, varid=varname, vals=m.p.chunk,
                   start=c(chunk['start'], 1, 1), count=dim(m.p.chunk))
         rm(o.c.chunk, m.p.chunk)
         gc()
     }
-
-    stopImplicitCluster()
+    stop.par.backend(be)
 
     print("Closing up the input and output files")
     nc_close(gcm)
