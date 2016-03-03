@@ -219,6 +219,9 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
     obs.at.analogues <- t(matrix(agged.obs[,,analogue.indices][na.mask], ncol=n.analogues))
     weights <- construct.analogue.weights(obs.at.analogues, gcm[na.mask])
 
+    # Remap the search space indices to full timeseries indices
+    analogue.indices <- ti[analogue.indices]
+
     list(analogues=analogue.indices, weights=weights)
 }
 
