@@ -163,26 +163,6 @@ tQPQM <- function(o.c, m.c, m.p,
     unsplit(mhat.list, m.p.factor)
 }
 
-compute.time.stats <- function(nc, start=NULL, end=NULL) {
-  vals <- netcdf.calendar(nc, 'time')
-  if (is.null(start)) {
-    start <- vals[1]
-  }
-  if (is.null(end)) {
-    end <- vals[length(vals)]
-  }
-  t0 <- as.PCICt(start, cal=attr(vals, 'cal'))
-  tn <- as.PCICt(end, cal=attr(vals, 'cal'))
-  i <- vals >= t0 & vals <= tn
-  vals <- vals[i]
-  list(vals=vals,
-       i=i,
-       t0=min(which(i)),
-       tn=max(which(i)),
-       n=length(vals)
-       )
-}
-
 #' @title High-level wrapper for Quantile perturbation quantile mapping (QPQM)
 #'
 #' @description This function performs the QPQM algorithm on a

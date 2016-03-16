@@ -28,45 +28,27 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
     lon <- qpqm$dim$lon$vals
     nlon <- length(lon)
 
-    dates.qpqm <- as.PCICt(strsplit(qpqm$dim$time$units, ' ')[[1]][3],
-                           qpqm$dim$time$calendar) + qpqm$dim$time$vals*86400
-    dates.qpqm <-  apply(do.call(rbind, strsplit(format(dates.qpqm, '%Y %m %d'),
-                                                 ' ')), 2, as.integer)
+    bcca.time <- compute.time.stats(nc)
 
-    dates.bcca <- as.PCICt(strsplit(bcca$dim$time$units, ' ')[[1]][3],
-                           bcca$dim$time$calendar) + bcca$dim$time$vals*86400
-    dates.bcca <-  apply(do.call(rbind, strsplit(format(dates.bcca, '%Y %m %d'),
-                                                 ' ')), 2, as.integer)
+    n.qpqm <- qpqm$dim$time$len
+    n.bcca <- bcca.time$n
 
-    n.qpqm <- nrow(dates.qpqm)
-    n.bcca <- nrow(dates.bcca)
+    years <- unique(format(bcca.time$vals, '%Y'))
 
-    years <- unique(dates.bcca[,1])
-    n.chunks <- 2 ##length(years)
-
-    ##----------------------------------------------------------
-    nlon <- 400
-
-    for (n in 1:n.chunks) { # One year at a time
-        year <- years[n]
+    for (year in years) { # One year at a time
         print(year)
-        t.st <- grep(year,dates.bcca[,1])[1]
+        i <- which(year == format(bcca.time$vals, '%Y')
+        t.st <- i[1]
         print(t.st)
-        date.sub <- dates.bcca[dates.bcca[,1] %in% year,]
-        t.cnt <- nrow(date.sub)
-        mons <- date.sub[,2]
+        date.sub <- bcca.time$vals[i]
+        t.cnt <- length(date.sub)
+        mons <- as.numeric(format(date.sub, '%m'))
 
         read.time <- proc.time()
         # Read one year for all space
         var.bcca <- ncvar_get(bcca,varid=var.name,start=c(1,1,t.st),count=c(nlon,nlat,t.cnt))
         var.qpqm <- ncvar_get(qpqm,varid=var.name,start=c(1,1,t.st),count=c(nlon,nlat,t.cnt))
         var.final <- var.qpqm*0
-
-        # This does nothing and is a waste of time
-        ncvar_put(nc=out, varid=var.name, vals=var.final,
-                  start=c(1, 1, t.st), count=dim(var.final))
-        print('Reading data time')
-        print(proc.time()-read.time)
 
         print('Arrange into list')
         mn.subset <- vector(mode='list',length=12)
@@ -79,17 +61,14 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
             bcca.list[[m]] <- var.bcca[,,subset]
             qpqm.list[[m]] <- var.qpqm[,,subset]
         }
-        ##qpqm.list=qpqm.list,
-        print('Parallel')
+
         par.time <- proc.time()
-        ##for (i in 1:12) {
+
         dqm <- foreach(i=1:12,
                        b.list=bcca.list,
-                       q.list=qpqm.list, ##, ##) %dopar% {
+                       q.list=qpqm.list,
                        .inorder=TRUE,
                        .options.mpi=mpi.options) %dopar% {
-                           ##.combine='cbind',
-                           ##.multicombine=TRUE,
 
                            b.list <- jitter(bcca.list[[i]],0.01) # Why the jitter on the BCCA output?
                            q.list <- qpqm.list[[i]]
