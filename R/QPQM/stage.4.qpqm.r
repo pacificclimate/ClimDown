@@ -23,10 +23,8 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
     bcca <- nc_open(bcca.file)
     out  <- nc_open(out.file,write=TRUE)
 
-    lat <- qpqm$dim$lat$vals
-    nlat <- length(lat)
-    lon <- qpqm$dim$lon$vals
-    nlon <- length(lon)
+    nlat <- qpqm$dim$lat$len
+    nlon <- qpqm$dim$lon$len
 
     bcca.time <- compute.time.stats(nc)
 
