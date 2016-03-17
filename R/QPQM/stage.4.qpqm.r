@@ -14,7 +14,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
     ## gcm_file - GCM simulations interpolated to the obs_file grid (i.e. BCCA output)
     ## 
     ## output_file - The file to create (or overwrite) with the bias corrected outputs
-    ## var.name - One of pr, tasmax, tasmin
+    ## varname - One of pr, tasmax, tasmin
     ##
     ## All files should have the same spatial domain.\n\n')
     ptm <- proc.time()
@@ -29,51 +29,43 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
     bcca.time <- compute.time.stats(nc)
 
     n.qpqm <- qpqm$dim$time$len
-    n.bcca <- bcca.time$n
+    nt <- bcca.time$n
 
-    years <- unique(format(bcca.time$vals, '%Y'))
+    ncells <- nlat * nlon
+    chunk.size <- optimal.chunk.size(ncells)
+    nelem <- (ncells * nt) / chunk.size
+    fact <- chunk.month.factor(bcca.time$vals, nelem)
 
-    for (year in years) { # One year at a time
-        print(year)
-        i <- which(year == format(bcca.time$vals, '%Y')
-        t.st <- i[1]
-        print(t.st)
-        date.sub <- bcca.time$vals[i]
-        t.cnt <- length(date.sub)
-        mons <- as.numeric(format(date.sub, '%m'))
+    # Do I/O in large chunks
+    indices <- lapply(
+        split(1:bcca.time$n, fact),
+        function(x) {c('start'=min(x), 'stop'=max(x), 'length'=length(x))}
+    )
 
-        read.time <- proc.time()
-        # Read one year for all space
-        var.bcca <- ncvar_get(bcca,varid=var.name,start=c(1,1,t.st),count=c(nlon,nlat,t.cnt))
-        var.qpqm <- ncvar_get(qpqm,varid=var.name,start=c(1,1,t.st),count=c(nlon,nlat,t.cnt))
-        var.final <- var.qpqm*0
+    for (index in indices) {
+        i_0 <- index['start']
+        i_n <- index['stop']
+        ni <- index['length']
 
-        print('Arrange into list')
-        mn.subset <- vector(mode='list',length=12)
-        bcca.list <- vector(mode='list',length=12)
-        qpqm.list <- vector(mode='list',length=12)
-        # Split the year up into 12 months
-        for (m in 1:12) {
-            subset <- which(mons==m)
-            mn.subset[[m]] <- subset
-            bcca.list[[m]] <- var.bcca[,,subset]
-            qpqm.list[[m]] <- var.qpqm[,,subset]
-        }
+        print(paste("Processing steps", i_0, "-", i_n, "/", nt))
 
-        par.time <- proc.time()
+        # Read all space for the time chunk
+        var.bcca <- ncvar_get(bcca,varid=varname,start=c(1,1,i_0),count=c(nlon,nlat,ni))
+        var.qpqm <- ncvar_get(qpqm,varid=varname,start=c(1,1,i_0),count=c(nlon,nlat,ni))
 
-        dqm <- foreach(i=1:12,
-                       b.list=bcca.list,
-                       q.list=qpqm.list,
-                       .inorder=TRUE,
-                       .options.mpi=mpi.options) %dopar% {
+        date.sub <- bcca.time$vals[i_0:i_n]
+        month.factor <- as.factor(format(date.sub, '%Y-%m'))
 
-                           b.list <- jitter(bcca.list[[i]],0.01) # Why the jitter on the BCCA output?
-                           q.list <- qpqm.list[[i]]
+        dqm <- foreach(
+            b.list=split(var.bcca, month.factor),
+            q.list=split(var.qpqm, month.factor),
+            .combine=abind,
+            .inorder=TRUE) %do% {
 
+                           b.list <- jitter(b.list, 0.01)
+
+                           print(dim(b.list))
                            slen <- dim(b.list)[3]
-                           nlon <- dim(b.list)[1]
-                           nlat <- dim(b.list)[2]
                            # FIXME: We need to actually apply the BCCA analogues to the obs here
                            # For each point in space, rank the days within a single month
                            bcca.ranks <- round(aperm(apply(b.list,c(1,2),rank,ties.method='average'),c(2,3,1))) ##Permute to fix the rank permute
@@ -93,13 +85,11 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
                            # For each cell, reorder the time steps based on the ranks
                            result <- mapply(reorder,data.l,index.l)
                            dim(result) <- c(slen,nlon,nlat)
-                           final <- aperm(result,c(2,3,1))
+                           aperm(result,c(2,3,1))
                        }
-        for (l in 1:12)
-            var.final[,,mn.subset[[l]]] <- dqm[[l]]
 
-        ncvar_put(nc=out, varid=var.name, vals=var.final,
-                  start=c(1, 1, t.st), count=dim(var.final))
+        ncvar_put(nc=out, varid=varname, vals=dqm,
+                  start=c(1, 1, n_0), count=c(-1, -1, ni))
     }
 
     nc_close(qpqm)

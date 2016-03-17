@@ -46,3 +46,32 @@ optimal.chunk.size <- function(n.elements, max.GB=getOption('max.GB')) {
   # 8 byte numerics
   floor(max.GB * 2 ** 30 / 8 / n.elements)
 }
+
+# Takes a vector of PCICt dates and chunk.size and splits the vector into chunks
+# that are *approximately* of that size, but only break on the boundaries
+# between months
+chunk.month.factor <- function(t, chunk.size) {
+    time.factor <- factor(format(t, '%Y-%m'))
+    chunk.factor <- factor(ceiling(1:length(t) / chunk.size))
+    f <- interaction(time.factor, chunk.factor, drop=T)
+
+    # Do two passes across the levels of the factor:
+    # The first pass merges a month across chunk boundaries
+    nl <- nlevels(f)
+    new.levels <- mapply(
+        function(prev, this) {
+            prev.month <- strsplit(prev, '.', fixed=T)[[1]][1]
+            this.month <- strsplit(this, '.', fixed=T)[[1]][1]
+            if (prev.month == this.month) {
+                prev
+            }
+            else {
+                this
+            }
+        },
+        levels(f)[1:nl-1], levels(f)[2:nl]
+        )
+    # The second pass eliminates the months from the factor
+    levels(f) <- gsub('.*\\.(.*)', '\\1', c(levels(f)[1], new.levels))
+    f
+}
