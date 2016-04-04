@@ -13,18 +13,34 @@ monthly.climatologies <- function(gcm, gcm.times) {
 }
 
 # O(2n) time, O(2n) space
-daily.anomalies <- function(gcm, gcm.times) {
-    clima <- monthly.climatologies(gcm, gcm.times)
+daily.anomalies <- function(gcm, gcm.times,cal,varname) {
+
+    gcm.sub <- gcm[,,cal[1]:cal[2]]
+    gcm.times.sub <- gcm.times[cal[1]:cal[2]]
+    clima <- monthly.climatologies(gcm.sub, gcm.times.sub)
     months <- as.integer(format(gcm.times, '%m'))
-    array(
+    if (varname=='pr') {
+      array(
         mapply(
-            function(ti, m) {
-                gcm[,,ti] - clima[,,m]
-            },
-            seq_along(gcm.times), months
-        ),
+          function(ti, m) {
+            gcm[,,ti] / clima[,,m]
+          },
+          seq_along(gcm.times), months
+          ),
         dim=dim(gcm)
-    )
+        )
+    } else {
+      array(
+        mapply(
+          function(ti, m) {
+            gcm[,,ti] - clima[,,m]
+          },
+          seq_along(gcm.times), months
+          ),
+        dim=dim(gcm)
+        )
+    }
+
 }
 
 # x is a 3d array; clima is a 3d array with 3rd dim of length 12;
@@ -50,7 +66,13 @@ apply.climatologies.nc <- function(nc, clima, monthly.factor, varname='tasmax', 
         print(paste("Applying climatologies to file", nc$filename, "steps", i['start'], ':', i['stop'], '/', nt))
         x <- ncvar_get(nc, varid=varname, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
         t <- monthly.factor[i['start']:i['stop']]
-        x <- x + clima[,,t]
+        if (varname=='pr') {
+          x[x<0]<-0
+          x <- x*clima[,,t]
+        } else {
+          x <- x + clima[,,t]
+        }
+
         ncvar_put(nc, varid=varname, vals=x, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
     }
     NULL
@@ -77,7 +99,8 @@ chunked.factored.running.mean <- function(nc, fact, var.id, nt.per.chunk=100) {
         print(paste("Reading timesteps", i['start'], ':', i['stop'], '/', nt, 'from file:', nc$filename))
         x <- ncvar_get(nc, varid=var.id, start=c(1, 1, i['start']), # get obs for one chunk
                        count=c(-1, -1, i['length']))
-
+        if (var.id=='pr')
+          x[x<0] <- 0
         print("Computing the temporal mean")
         # get the sum across time (to be averaged)
         subsum <- aperm(
@@ -142,7 +165,8 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
                                            gcm, output.nc, varname,
                                            nt.per.chunk=100) {
     nt <- dim(gcm)[3]
-    stopifnot(output.nc$var[[varname]]$varsize == c(length(obs.lats), length(obs.lons), dim(gcm)[3]))
+
+    stopifnot(output.nc$var[[varname]]$varsize == c(length(obs.lons), length(obs.lats), dim(gcm)[3]))
     obs.grid <- xy.grid(obs.lats, obs.lons)
 
     src <- list(x=gcm.lons, y=gcm.lats)
@@ -160,7 +184,7 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
                 interp.surface(src, dst)
                 #FIXME add the climatology? after this
             }),
-            dim=c(length(obs.lats), length(obs.lons), i['length'])
+            dim=c(length(obs.lons), length(obs.lats), i['length'])
         )
         ncvar_put(output.nc, varname, vals=rv, start=c(1, 1, i0), count=c(-1, -1, i['length']))
     }
@@ -200,10 +224,13 @@ bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     units <- ncatt_get(nc.gcm, varname, 'units')$value
     gcm <- ud.convert(gcm, units, target.units[varname])
     gcm.times <- netcdf.calendar(nc.gcm)
-
-    print('Calculating daily anomalies on the GCM')
-    anom <- daily.anomalies(gcm, gcm.times)
     
+    print('Calculating daily anomalies on the GCM')
+    ##Subset calibration period
+    cal <- c(head(grep('1951',gcm.times),1),
+             tail(grep('2005',gcm.times),1))
+    anom <- daily.anomalies(gcm, gcm.times,cal,varname)
+
     nc.obs <- nc_open(obs.file)
     obs.lats <- nc_gety(nc.obs)
     obs.lons <- nc_getx(nc.obs)

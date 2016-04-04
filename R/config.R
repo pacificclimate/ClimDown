@@ -30,7 +30,7 @@
     if(any(toset)) options(cd.options[toset])
 }
 
-target.units <- c(tasmax='celsius', tasmin='celsius', pr='mm day-1')
+target.units <- c(tasmax='celsius', tasmin='celsius', pr='kg m-2 d-1') ##pr='mm day-1')
 
 # Takes a vector length and chunk size
 # returns a list of (start, stop, length)
