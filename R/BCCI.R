@@ -47,18 +47,17 @@ apply.climatologies <- function(x, clima, monthly.factor) {
 }
 
 apply.climatologies.nc <- function(nc, clima, monthly.factor, varname='tasmax', nt.per.chunk=100) {
+    `%op%` <- ifelse(varname == 'pr', `*`, `+`)
     nt <- nc$var[[varname]]$varsize[3]
     chunks <- chunk.indices(nt, nt.per.chunk)
     for (i in chunks) {
         print(paste("Applying climatologies to file", nc$filename, "steps", i['start'], ':', i['stop'], '/', nt))
         x <- ncvar_get(nc, varid=varname, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
         t <- monthly.factor[i['start']:i['stop']]
-        if (varname=='pr') {
-          x[x<0]<-0
-          x <- x*clima[,,t]
-        } else {
-          x <- x + clima[,,t]
+        if (varname == 'pr') {
+            x[x < 0] <- 0
         }
+        x <- x %op% clima[,,t]
 
         ncvar_put(nc, varid=varname, vals=x, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
     }
