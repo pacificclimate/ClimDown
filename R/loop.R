@@ -1,8 +1,8 @@
-cores <- getOption('mc.cores')
+cores <- getOption('mc.cores', 1)
 if (cores > 1) {
   `%loop%` <- `%dopar%`
   start.par.backend <- function() {
-    backend <-  getOption('par.backend')
+    backend <-  getOption('par.backend', 'multicore')
     if ( backend == 'MPI') {
       require(doMPI)
       cl <- startMPIcluster(cores-1)
@@ -17,7 +17,7 @@ if (cores > 1) {
     cl
   }
   stop.par.backend <- function(cl) {
-    backend <-  getOption('par.backend')
+    backend <-  getOption('par.backend', 'multicore')
     if ( backend == 'MPI') {
       require(doMPI)
       closeCluster(cl)
