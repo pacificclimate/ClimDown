@@ -1,3 +1,4 @@
 .git
 README.rst
 CONTRIBUTING.rst
+.travis.yml

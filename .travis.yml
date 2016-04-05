@@ -1,0 +1,7 @@
+language: r
+sudo: true
+cache: packages
+apt_packages:
+  - libnetcdf-dev
+  - netcdf-bin
+  - libudunits2-dev

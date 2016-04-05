@@ -1,12 +1,18 @@
 Package: ClimDown
 Version: 0.0.1
-Date: 2015-??-??
+Date: 2016-??-??
 Title: PCIC's Daily Climate Downscaling Library
 Authors@R: c(person("Alex Cannon", role = "aut", email = "acannon@uvic.ca"),
 	     person("James Hiebert", role = c("aut", "cre"), email = "hiebert@uvic.ca"),
 	     person("Arelia Werner", role = "aut", email = "wernera@uvic.ca"),
 	     person("Steven Sobie", role = "aut", email = "ssobie@uvic.ca"))
 Imports:
+    PCICt,
+    udunits2,
+    ncdf4,
+    fields,
+    foreach,
+    seas
 Suggests:
 Description: PCIC's suite of routines for downscaling coarse
     scale global climate model (GCM) output to a fine spatial
