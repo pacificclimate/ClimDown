@@ -1,0 +1,4 @@
+language: r
+cache: packages
+apt_packages:
+  - libnetcdf-dev
