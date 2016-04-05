@@ -14,33 +14,20 @@ monthly.climatologies <- function(gcm, gcm.times) {
 
 # O(2n) time, O(2n) space
 daily.anomalies <- function(gcm, gcm.times,cal,varname) {
-
+    `%op%` <- ifelse (varname == 'pr', `/`, `-`)
     gcm.sub <- gcm[,,cal[1]:cal[2]]
     gcm.times.sub <- gcm.times[cal[1]:cal[2]]
     clima <- monthly.climatologies(gcm.sub, gcm.times.sub)
     months <- as.integer(format(gcm.times, '%m'))
-    if (varname=='pr') {
-      array(
+    array(
         mapply(
-          function(ti, m) {
-            gcm[,,ti] / clima[,,m]
-          },
-          seq_along(gcm.times), months
-          ),
+            function(ti, m) {
+                gcm[,,ti] %op% clima[,,m]
+            },
+            seq_along(gcm.times), months
+        ),
         dim=dim(gcm)
-        )
-    } else {
-      array(
-        mapply(
-          function(ti, m) {
-            gcm[,,ti] - clima[,,m]
-          },
-          seq_along(gcm.times), months
-          ),
-        dim=dim(gcm)
-        )
-    }
-
+    )
 }
 
 # x is a 3d array; clima is a 3d array with 3rd dim of length 12;
