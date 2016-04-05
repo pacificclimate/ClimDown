@@ -1,4 +1,5 @@
 language: r
+sudo: true
 cache: packages
 apt_packages:
   - libnetcdf-dev
