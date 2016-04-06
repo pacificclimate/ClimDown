@@ -7,5 +7,5 @@ apt_packages:
   - libudunits2-dev
 r_packages:
   - roxygen2
-before_install:
+before_script:
   - echo "roxygen2::roxygenise()" | R --vanilla
