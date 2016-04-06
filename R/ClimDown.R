@@ -15,8 +15,6 @@
 #' @name ClimDown
 #' @aliases ClimDown-package
 #' @docType package
-#' @seealso \code{\link{climdexInput.raw}}, \code{\link{climdexInput.csv}},
-#' \code{\link{climdexInput-class}}.
 #' @references Alex J. Cannon, Stephen R. Sobie, and Trevor Q. Murdock, 2015: Bias Correction of GCM Precipitation by Quantile Mapping: How Well Do Methods Preserve Changes in Quantiles and Extremes?. J. Climate, 28, 6938–6959.
 #' @keywords climate downscaling
 #' @import PCICt udunits2 ncdf4 fields foreach seas
