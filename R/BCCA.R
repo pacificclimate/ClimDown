@@ -246,6 +246,17 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 
 #' @title High-level NetCDF I/O wrapper for the Bias Correction Constructed Analogues (BCCA) pipeline
 #'
+#' @description BCCA starts by spatially aggregating high-resolution
+#' gridded observations up to the scale of a GCM. Then it proceeds to
+#' bias correcting the GCM based on those observations. Finally, it
+#' conducts the search for temporal analogues (which is the most
+#' expensive part of the operation). This involves taking each
+#' timestep in the GCM and searching for the top 30 closest timesteps
+#' (for some function of "close") in the gridded observations. For
+#' each of the 30 closest "analogue" timesteps, BCCA records the
+#' integer number of the timestep and a weight for each of the
+#' analogues. These are all saved in output.file.
+#' 
 #' @param gcm.file Filename of GCM simulations
 #' @param obs.file Filename of high-res gridded historical observations
 #' @param output.file Cache file for saving the analogues

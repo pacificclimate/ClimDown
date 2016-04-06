@@ -203,6 +203,16 @@ nc_gety <- function(nc) {
 
 #' @title High-level NetCDF wrapper for Bias Correction Climate Imprint (BCCI)
 #'
+#' @description BCCI performs several steps. For the GCM input it
+#' calculates daily climate anomalies from a given calibration period
+#' (default 1951-2005). These daily GCM anomalies are interpolated to
+#' the high-resolution observational grid. These interpolated daily
+#' anomalies constitute the "Climate Imprint". The high resolution
+#' gridded observations are then grouped into months and a climatology
+#' is calculated for each month. Finally the observed climatology is
+#' added to the GCM-based climate imprint and the final result is
+#' saved to output.file.
+#'
 #' @param gcm.file Filename of GCM simulations
 #' @param obs.file Filename of high-res gridded historical observations
 #' @param output.file Filename to create (or overwrite) with the climate imprint outputs
