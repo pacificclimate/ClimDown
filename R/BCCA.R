@@ -244,8 +244,16 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
     nc
 }
 
-# NetCDF I/O wrapper for the whole BCCA pipeline
-bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
+#' @title High-level NetCDF I/O wrapper for the Bias Correction Constructed Analogues (BCCA) pipeline
+#'
+#' @param gcm.file Filename of GCM simulations
+#' @param obs.file Filename of high-res gridded historical observations
+#' @param output.file Cache file for saving the analogues
+#' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
+#' @return NULL
+#'
+#' @export
+bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file='analogues.Rdata', varname='tasmax') {
     is.pr <- varname == 'pr'
 
     # Read in GCM data
@@ -275,5 +283,5 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
 
     bc.gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=!is.pr, ratio=is.pr)
     analogues <- find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
-    save(analogues, file='analogues.Rdata')
+    save(analogues, file=output.file)
 }

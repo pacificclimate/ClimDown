@@ -183,6 +183,15 @@ compute.time.stats <- function(nc, start=NULL, end=NULL) {
        )
 }
 
+#' @title High-level wrapper for Quantile perturbation quantile mapping (QPQM)
+#'
+#' @param obs.file Filename of high-res gridded historical observations
+#' @param gcm.file Filename of GCM simulations interpolated to the obs.file grid
+#' @param out.file Filename to create (or overwrite) with the bias corrected outputs
+#' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
+#' @return NULL
+#'
+#' @export
 qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
     ptm <- proc.time()
 

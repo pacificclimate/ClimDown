@@ -201,6 +201,14 @@ nc_gety <- function(nc) {
     ncvar_get(nc, 'lat')
 }
 
+#' @title High-level NetCDF wrapper for Bias Correction Climate Imprint (BCCI)
+#'
+#' @param gcm.file Filename of GCM simulations
+#' @param obs.file Filename of high-res gridded historical observations
+#' @param output.file Filename to create (or overwrite) with the climate imprint outputs
+#' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
+#'
+#' @export
 bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
 
     nc.gcm <- nc_open(gcm.file)
