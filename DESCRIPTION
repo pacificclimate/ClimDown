@@ -13,7 +13,6 @@ Imports:
     fields,
     foreach,
     seas
-Suggests:
 Encoding: UTF-8
 Description: PCIC's suite of routines for downscaling coarse
     scale global climate model (GCM) output to a fine spatial
