@@ -5,3 +5,7 @@ apt_packages:
   - libnetcdf-dev
   - netcdf-bin
   - libudunits2-dev
+r_packages:
+  - roxygen2
+before_script:
+  - echo "roxygen2::roxygenise()" | R --vanilla

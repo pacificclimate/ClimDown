@@ -183,6 +183,22 @@ compute.time.stats <- function(nc, start=NULL, end=NULL) {
        )
 }
 
+#' @title High-level wrapper for Quantile perturbation quantile mapping (QPQM)
+#'
+#' @description This function performs the QPQM algorithm on a
+#' cell-by-cell basis for each cell in the spatial domain of the
+#' inputted high-res gridded observations. It uses the gridded
+#' observations plus the GCM-based output of BCCI as input to the
+#' algorithm and then performs a quantile perturbation/quantile
+#' mapping bias correction. The output is written out to out.file.
+#' 
+#' @param obs.file Filename of high-res gridded historical observations
+#' @param gcm.file Filename of GCM simulations interpolated to the obs.file grid
+#' @param out.file Filename to create (or overwrite) with the bias corrected outputs
+#' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
+#' @return NULL
+#'
+#' @export
 qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
     ptm <- proc.time()
 
