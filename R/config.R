@@ -9,7 +9,8 @@
         trimmed.mean=0,
         delta.days=45,
         n.analogues=30,
-        obs.ca.years=1951:2005,
+        calibration.start=as.POSIXct('1971-01-01', tz='GMT'),
+        calibration.end=as.POSIXct('2005-12-31', tz='GMT'),
         tol=0.1,
         expon=0.5,
         # QPQM options

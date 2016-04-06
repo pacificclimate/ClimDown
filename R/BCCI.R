@@ -13,11 +13,10 @@ monthly.climatologies <- function(gcm, gcm.times) {
 }
 
 # O(2n) time, O(2n) space
-daily.anomalies <- function(gcm, gcm.times,cal,varname) {
+daily.anomalies <- function(gcm, gcm.times, cal.start, cal.end, varname) {
     `%op%` <- ifelse (varname == 'pr', `/`, `-`)
-    gcm.sub <- gcm[,,cal[1]:cal[2]]
-    gcm.times.sub <- gcm.times[cal[1]:cal[2]]
-    clima <- monthly.climatologies(gcm.sub, gcm.times.sub)
+    ti <- gcm.times >= cal.start & gcm.times <= cal.end
+    clima <- monthly.climatologies(gcm[,,ti], gcm.times[ti])
     months <- as.integer(format(gcm.times, '%m'))
     array(
         mapply(
@@ -230,10 +229,10 @@ bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax
     gcm.times <- netcdf.calendar(nc.gcm)
     
     print('Calculating daily anomalies on the GCM')
-    ##Subset calibration period
-    cal <- c(head(grep('1951',gcm.times),1),
-             tail(grep('2005',gcm.times),1))
-    anom <- daily.anomalies(gcm, gcm.times,cal,varname)
+    cal <- attr(gcm.times, 'cal')
+    cstart <- as.PCICt(getOption('calibration.start'), cal=cal)
+    cend <- as.PCICt(getOption('calibration.end'), cal=cal)
+    anom <- daily.anomalies(gcm, gcm.times, cstart, cend, varname)
 
     nc.obs <- nc_open(obs.file)
     obs.lats <- nc_gety(nc.obs)

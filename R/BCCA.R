@@ -78,8 +78,8 @@ na.masked <- function(grid) {
 bias.correct.dqm <- function(gcm, aggd.obs,
                              obs.time,
                              gcm.time,
-                             historical.start='1951-1-1',
-                             historical.end='2005-12-31',
+                             historical.start=getOption('calibration.start'),
+                             historical.end=getOption('calibration.end'),
                              detrend=FALSE,
                              ratio=FALSE) {
     t0 <- as.PCICt(historical.start, attr(gcm.time, 'cal'))
@@ -155,7 +155,8 @@ construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
 # delta.days: an integer describing the size of the window on either side of today
 analogue.search.space <- function(times, today,
                                   delta.days=getOption('delta.days'),
-                                  year.range=c(1951, 2005)) {
+                                  t0=getOption('calibration.start'),
+                                  tn=getOption('calibration.end')) {
     cal <- attr(times, 'cal')
     dpy <- if (cal == '360') 360 else 365
     jdays <- as.numeric(format(times, '%j'))
@@ -163,8 +164,7 @@ analogue.search.space <- function(times, today,
 
     distance <- abs(jdays - today)
     in.days <- distance <= delta.days | distance >= (dpy - delta.days)
-    in.years <- times >= as.PCICt(paste(year.range[1], 1, 1, sep='-'), cal=cal) &
-        times <= as.PCICt(paste(year.range[2], 12, 31, sep='-'), cal=cal)
+    in.years <- times >= as.PCICt(t0, cal=cal) & times <= as.PCICt(tn, cal=cal)
     which(in.days & in.years)
 }
 
@@ -292,7 +292,11 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file='analogues.Rdata
     obs.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)
 
-    bc.gcm <- bias.correct.dqm(gcm, aggd.obs, obs.time, gcm.time, detrend=!is.pr, ratio=is.pr)
+    bc.gcm <- bias.correct.dqm(
+        gcm, aggd.obs, obs.time, gcm.time,
+        getOption('calibration.start'), getOption('calibration.end'),
+        detrend=!is.pr, ratio=is.pr
+    )
     analogues <- find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
     save(analogues, file=output.file)
 }
