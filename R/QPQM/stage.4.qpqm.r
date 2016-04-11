@@ -7,16 +7,18 @@ reorder <- function(x,ix) {
   return(rx)
 }
 
-# Quantile perturbation quantile mapping
+#' @title High-level NetCDF wrapper for Quantile Delta Mapping (QDM)
+#'
+#' @description All files (save for the analogues_file) should have the same spatial domain.
+#'
+#' @param qpqm.file The output file from the QPQM script
+#' @param bcca.file The output file from the BCC??? script
+#' @param analogues Temporal analogues... describe this more
+#' @param out.file The file to create (or overwrite) with the final NetCDF output
+#' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
+#'
+#' @export
 qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varname='tasmax') {
-    ## Arguments:
-    ## qpqm.file - Gridded historical observations (i.e. QPQM output)
-    ## gcm_file - GCM simulations interpolated to the obs_file grid (i.e. BCCA output)
-    ## 
-    ## output_file - The file to create (or overwrite) with the bias corrected outputs
-    ## varname - One of pr, tasmax, tasmin
-    ##
-    ## All files should have the same spatial domain.\n\n')
     ptm <- proc.time()
 
     qpqm.nc <- nc_open(qpqm.file)
