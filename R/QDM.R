@@ -95,42 +95,10 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
                     )
                 unsplit(rv, month.factor)
             }
-        ## dqm <- foreach(
-        ##     b.list=split(var.bcca, month.factor),
-        ##     q.list=split(var.qpqm, month.factor),
-        ##     .combine=abind,
-        ##     .inorder=TRUE) %do% {
-
-        ##         b.list <- jitter(b.list, 0.01)
-
-        ##         print(dim(b.list))
-        ##         slen <- dim(b.list)[3]
-        ##         # FIXME: We need to actually apply the BCCA analogues to the obs here
-        ##         # For each point in space, rank the days within a single month
-        ##         bcca.ranks <- round(aperm(apply(b.list,c(1,2),rank,ties.method='average'),c(2,3,1))) ##Permute to fix the rank permute
-        ##         data.p <- aperm(q.list,c(3,1,2))
-
-        ##         # Permute the QPQM data into time x cell...
-        ##         dim(data.p) <- c(slen,nlon*nlat)
-        ##         # ... then convert it to a list
-        ##         data.l <- lapply(apply(data.p,2,as.list),unlist)
-
-        ##         # Permute the BCCA ranks as well into time x cell...
-        ##         index.p <- aperm(bcca.ranks,c(3,1,2))
-        ##         dim(index.p) <- c(slen,nlon*nlat)
-        ##         # ... and make them a list
-        ##         index.l <- lapply(apply(index.p,2,as.list),unlist)
-
-        ##         # For each cell, reorder the time steps based on the ranks
-        ##         result <- mapply(reorder,data.l,index.l)
-        ##         dim(result) <- c(slen,nlon,nlat)
-        ##         aperm(result,c(2,3,1))
-        ##     }
-
-        #ncvar_put(nc=out.nc, varid=varname, vals=dqm,
-        #          start=c(1, 1, n_0), count=c(-1, -1, ni))
+        print(paste("Writing steps", i_0, "-", i_n, "/", nt, "to file", out.file))
+        ncvar_put(nc=out.nc, varid=varname, vals=dqm,
+                  start=c(1, 1, i_0), count=c(-1, -1, ni))
     }
-    browser()
     nc_close(qpqm.nc)
     nc_close(bcca.nc)
     #nc_close(out)
