@@ -35,8 +35,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
 
     ncells <- nlat * nlon
     chunk.size <- optimal.chunk.size(ncells)
-    nelem <- (ncells * nt) / chunk.size
-    fact <- chunk.month.factor(bcca.time$vals, nelem)
+    fact <- chunk.month.factor(bcca.time$vals, chunk.size)
 
     # Do I/O in large chunks
     indices <- lapply(
