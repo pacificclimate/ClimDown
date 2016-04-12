@@ -23,7 +23,11 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
 
     qpqm.nc <- nc_open(qpqm.file)
     bcca.nc <- nc_open(bcca.file)
-    #out.nc  <- nc_open(out.file,write=TRUE)
+
+    cat('Creating output file', out.file, '\n')
+    dims <- qpqm.nc$var[[varname]]$dim
+    vars <- ncvar_def(varname, qpqm.nc$var[[varname]]$units, dims)
+    out.nc <- nc_create(out.file, vars)
 
     nlat <- qpqm.nc$dim$lat$len
     nlon <- qpqm.nc$dim$lon$len
@@ -103,7 +107,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
     }
     nc_close(qpqm.nc)
     nc_close(bcca.nc)
-    #nc_close(out)
+    nc_close(out.nc)
 
     print('Elapsed time')
     print(proc.time() - ptm)
