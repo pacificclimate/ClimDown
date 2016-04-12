@@ -62,23 +62,25 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varnam
             bcca=split(var.bcca, 1:ncells),
             qpqm=split(var.qpqm, 1:ncells),
             .multicombine=TRUE,
-            .errorhandling='pass', #FIXME
+            .errorhandling='pass',
             .final=function(x) {
-                for (item in x) {
-                    if (! (is.numeric(item) || all(is.na(item)))) {
-                        browser()
+                # Replace errors with NAs
+                x <- lapply(x, function(item) {
+                    if (! (is.numeric(item))) {
+                        rep(NA, ni)
+                    } else {
+                        item
                     }
-                }
+                })
                 array(unlist(x, use.names=F), dim=c(nlat, nlon, ni))
             },
             .inorder=TRUE) %loop% {
                 if (all(is.na(bcca) && all(is.na(qpqm)))) {
                     return(rep(NA, nt))
                 }
-
                 # Jitter BCCA
                 bcca <- jitter(bcca, 0.01)
-                # Apply BCCA analogues
+                # FIXME: Apply BCCA analogues
                 # Month loop
                 rv <- mapply(
                     function(x, y) {
