@@ -1,7 +1,3 @@
-library(ncdf4)
-library(abind)
-library(PCICt)
-
 reorder <- function(x,ix) {
   rx <- x[ix]
   return(rx)
