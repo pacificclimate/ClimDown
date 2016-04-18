@@ -59,6 +59,17 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, obs.file, analogues, out.fi
         date.sub <- bcca.time$vals[i_0:i_n]
         month.factor <- as.factor(format(date.sub, '%Y-%m'))
 
+        # Apply all of the analogues corresponding to these time steps
+        var.bcca <- mapply(
+            function(ti, wi, i) {
+                print(paste("Applying analogues to timestep", i))
+                apply.analogues.netcdf(ti, wi[,1], obs.nc, varname)
+            },
+            analogues$indices[i_0:i_n],
+            analogues$weights[i_0:i_n],
+            i_0:i_n
+        )
+
         # Cell loop
         dqm <- foreach(
             bcca=split(var.bcca, 1:ncells),
