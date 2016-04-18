@@ -18,11 +18,13 @@ reorder <- function(x,ix) {
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
 #' @export
-qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, analogues, out.file, varname='tasmax') {
+qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, obs.file, analogues, out.file, varname='tasmax') {
     ptm <- proc.time()
 
     qpqm.nc <- nc_open(qpqm.file)
     bcca.nc <- nc_open(bcca.file)
+    obs.nc <- nc_open(obs.file)
+
 
     cat('Creating output file', out.file, '\n')
     dims <- qpqm.nc$var[[varname]]$dim

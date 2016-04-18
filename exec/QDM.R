@@ -13,6 +13,7 @@ usage <- function() {
       Arguments:
       qpqm_file - The output file from the QPQM script
       bcci_file - The output file from the BCCI script
+      obs_file - Filename of high-res gridded historical observations
       analogues_file - The output file from the BCCA script
       output_file - The file to create (or overwrite) with the ...
       varname - The name of the variable to downscale
@@ -24,13 +25,13 @@ usage <- function() {
 }
 
 args <- as.list(commandArgs(trailingOnly=TRUE))
-if (length(args) != 5) {
+if (length(args) != 6) {
     usage()
     quit(status=1)
 }
 
-names(args) <- c('qpqm.file', 'bcci.file', 'analogues.file', 'output.file', 'varid')
+names(args) <- c('qpqm.file', 'bcci.file', 'obs.file', 'analogues.file', 'output.file', 'varid')
 attach(args)
 
 load(analogues.file)
-qdm.netcdf.wrapper(gcm.file, obs.file, analogues, output.file, varid)
+qdm.netcdf.wrapper(gcm.file, bcci.file, obs.file, analogues, output.file, varid)
