@@ -8,18 +8,16 @@ reorder <- function(x,ix) {
 #' @description All files (save for the analogues_file) should have the same spatial domain.
 #'
 #' @param qpqm.file The output file from the QPQM script
-#' @param bcca.file The output file from the BCC??? script
 #' @param obs.file Filename of high-res gridded historical observations
 #' @param analogues Temporal analogues... describe this more
 #' @param out.file The file to create (or overwrite) with the final NetCDF output
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
 #' @export
-qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, obs.file, analogues, out.file, varname='tasmax') {
+qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname='tasmax') {
     ptm <- proc.time()
 
     qpqm.nc <- nc_open(qpqm.file)
-    bcca.nc <- nc_open(bcca.file)
     obs.nc <- nc_open(obs.file)
 
 
@@ -31,18 +29,18 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, obs.file, analogues, out.fi
     nlat <- qpqm.nc$dim$lat$len
     nlon <- qpqm.nc$dim$lon$len
 
-    bcca.time <- compute.time.stats(bcca.nc)
+    qpqm.time <- compute.time.stats(qpqm.nc)
 
     n.qpqm <- qpqm.nc$dim$time$len
-    nt <- bcca.time$n
+    nt <- qpqm.time$n
 
     ncells <- nlat * nlon
     chunk.size <- optimal.chunk.size(ncells)
-    fact <- chunk.month.factor(bcca.time$vals, chunk.size)
+    fact <- chunk.month.factor(qpqm.time$vals, chunk.size)
 
     # Do I/O in large chunks
     indices <- lapply(
-        split(1:bcca.time$n, fact),
+        split(1:qpqm.time$n, fact),
         function(x) {c('start'=min(x), 'stop'=max(x), 'length'=length(x))}
     )
 
@@ -54,10 +52,9 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, obs.file, analogues, out.fi
         print(paste("Processing steps", i_0, "-", i_n, "/", nt))
 
         # Read all space for the time chunk
-        var.bcca <- ncvar_get(bcca.nc, varid=varname, start=c(1,1,i_0), count=c(nlon,nlat,ni))
         var.qpqm <- ncvar_get(qpqm.nc, varid=varname, start=c(1,1,i_0), count=c(nlon,nlat,ni))
 
-        date.sub <- bcca.time$vals[i_0:i_n]
+        date.sub <- qpqm.time$vals[i_0:i_n]
         month.factor <- as.factor(format(date.sub, '%Y-%m'))
 
         # Apply all of the analogues corresponding to these time steps
@@ -71,52 +68,32 @@ qdm.netcdf.wrapper <- function(qpqm.file, bcca.file, obs.file, analogues, out.fi
             i_0:i_n
         )
 
-        # Cell loop
-        dqm <- foreach(
-            bcca=split(var.bcca, 1:ncells),
-            qpqm=split(var.qpqm, 1:ncells),
-            .multicombine=TRUE,
-            .errorhandling='pass',
-            .final=function(x) {
-                # Replace errors with NAs
-                x <- lapply(x, function(item) {
-                    if (! (is.numeric(item))) {
-                        rep(NA, ni)
-                    } else {
-                        item
-                    }
-                })
-                array(unlist(x, use.names=F), dim=c(nlat, nlon, ni))
-            },
-            .inorder=TRUE) %loop% {
-                if (all(is.na(bcca) && all(is.na(qpqm)))) {
-                    return(rep(NA, nt))
-                }
-                # Jitter BCCA
+        dqm <- mapply(
+            function(bcca, qpqm) {
                 bcca <- jitter(bcca, 0.01)
-                # FIXME: Apply BCCA analogues
-                # Month loop
-                rv <- mapply(
-                    function(x, y) {
-                        if (all(is.na(x) && all(is.na(y)))) {
-                            return(rep(NA, nt))
-                        }
-                        # Rank the days with bcca
-                        ranks <- rank(x, ties.method='average')
-                        # Reorder the days of qpqm
-                        reorder(y, ranks)
-                       },
-                    x = split(bcca, month.factor),
-                    y = split(qpqm, month.factor)
-                    )
-                unsplit(rv, month.factor)
-            }
+                ndays <- length(bcca) / ncells
+                dim(bcca) <- c(nlon, nlat, ndays)
+                ranks <- apply(bcca, 1:2, rank, ties.method='average')
+                ## Reorder the days of qpqm
+                array(
+                    mapply(
+                        reorder,
+                        split(qpqm, rep(1:ndays, each=ncells)),
+                        split(ranks, 1:ndays)
+                    ),
+                    dim=c(nlon, nlat, ndays)
+                )
+            },
+            split(var.bcca, rep(month.factor, each=ncells)),
+            split(var.qpqm, rep(month.factor, each=ncells))
+        )
+        dqm <- array(unsplit(dqm, rep(month.factor, each=ncells)), dim=c(nlon, nlat, ni))
         print(paste("Writing steps", i_0, "-", i_n, "/", nt, "to file", out.file))
         ncvar_put(nc=out.nc, varid=varname, vals=dqm,
                   start=c(1, 1, i_0), count=c(-1, -1, ni))
     }
     nc_close(qpqm.nc)
-    nc_close(bcca.nc)
+    nc_close(obs.nc)
     nc_close(out.nc)
 
     print('Elapsed time')
