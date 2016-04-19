@@ -127,14 +127,20 @@ apply.analogue <- function(x, weights) {
 # analog.indices: vector of time indices that correspond to the timesteps to compose together
 # weights: vector of length num.analogues corresponding to the analog indices
 # obs.nc: An open netcdf file containing gridded observations
-apply.analogues.netcdf <- function(analog.indices, weights, obs.nc) {
-    sum(
-        mapply(function(i, w) {
-            ncvar_get(nc=obs.nc, varid=varid,
-                      start=c(1, 1, i),
-                      count=c(-1, -1, 1)) * w
-        }
-        )
+apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasmax') {
+    dims <- obs.nc$var[[varid]]$size[1:2]
+    apply(
+        array(
+            mapply(function(i, w) {
+                       ncvar_get(nc=obs.nc, varid=varid,
+                                 start=c(1, 1, i),
+                                 count=c(-1, -1, 1)) * w
+                   },
+                   analog.indices, weights
+                   ),
+            dim=dims,
+            ),
+        1:2, sum
     )
 }
 
@@ -230,10 +236,13 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
 # gcm.times: PCICt vector of time values for the GCM
 # obs.time: PCICt vector of time values for the aggregated obs
 find.all.analogues <- function(gcm, agged.obs, gcm.times, obs.times) {
-    sapply(seq_along(gcm.times), function(i) {
-        print(paste(i, '/', length(gcm.times)))
-        find.analogues(gcm[,,i], agged.obs, obs.times, gcm.times[i])
-    })
+    split(
+        sapply(seq_along(gcm.times), function(i) {
+                   print(paste(i, '/', length(gcm.times)))
+                   find.analogues(gcm[,,i], agged.obs, obs.times, gcm.times[i])
+        }),
+        c('indices', 'weights')
+    )
 }
 
 mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list()) {
@@ -259,12 +268,11 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 #' 
 #' @param gcm.file Filename of GCM simulations
 #' @param obs.file Filename of high-res gridded historical observations
-#' @param output.file Cache file for saving the analogues
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
-#' @return NULL
+#' @return A list object with two values: 'indices' and 'weights', each of which is a vector with 30 items
 #'
 #' @export
-bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file='analogues.Rdata', varname='tasmax') {
+bcca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
     is.pr <- varname == 'pr'
 
     # Read in GCM data
@@ -297,6 +305,5 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file='analogues.Rdata
         getOption('calibration.start'), getOption('calibration.end'),
         detrend=!is.pr, ratio=is.pr
     )
-    analogues <- find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
-    save(analogues, file=output.file)
+    find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
 }
