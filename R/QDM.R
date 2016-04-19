@@ -9,6 +9,7 @@ reorder <- function(x,ix) {
 #'
 #' @param qpqm.file The output file from the QPQM script
 #' @param bcca.file The output file from the BCC??? script
+#' @param obs.file Filename of high-res gridded historical observations
 #' @param analogues Temporal analogues... describe this more
 #' @param out.file The file to create (or overwrite) with the final NetCDF output
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
