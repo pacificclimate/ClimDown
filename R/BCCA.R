@@ -273,7 +273,7 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 #' @return NULL
 #'
 #' @export
-bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file='analogues.Rdata', varname='tasmax') {
+bcca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
     is.pr <- varname == 'pr'
 
     # Read in GCM data
@@ -306,6 +306,5 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, output.file='analogues.Rdata
         getOption('calibration.start'), getOption('calibration.end'),
         detrend=!is.pr, ratio=is.pr
     )
-    analogues <- find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
-    save(analogues, file=output.file)
+    find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
 }

@@ -15,4 +15,5 @@ if (length(args) != 4) {
 names(args) <- c('gcm.file', 'obs.file', 'output.file', 'varid')
 attach(args)
 
-bcca.netcdf.wrapper(gcm.file, obs.file, output.file, varid)
+analogues <- bcca.netcdf.wrapper(gcm.file, obs.file, output.file, varid)
+save(analogues, output.file)
