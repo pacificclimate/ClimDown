@@ -57,19 +57,21 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         date.sub <- qpqm.time$vals[i_0:i_n]
         month.factor <- as.factor(format(date.sub, '%Y-%m'))
 
-        # Apply all of the analogues corresponding to these time steps
+        print(paste("Applying analogues to timesteps", i_0, "-", i_n, "/", nt))
         var.bcca <- mapply(
-            function(ti, wi, i) {
-                print(paste("Applying analogues to timestep", i))
+            function(ti, wi) {
                 apply.analogues.netcdf(ti, wi[,1], obs.nc, varname)
             },
             analogues$indices[i_0:i_n],
-            analogues$weights[i_0:i_n],
-            i_0:i_n
+            analogues$weights[i_0:i_n]
         )
 
-        dqm <- mapply(
-            function(bcca, qpqm) {
+        dqm <- foreach(
+            bcca=split(var.bcca, rep(month.factor, each=ncells)),
+            qpqm=split(var.qpqm, rep(month.factor, each=ncells)),
+            .multicombine=TRUE,
+            .inorder=TRUE
+            ) %loop% {
                 bcca <- jitter(bcca, 0.01)
                 ndays <- length(bcca) / ncells
                 dim(bcca) <- c(nlon, nlat, ndays)
@@ -83,10 +85,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
                     ),
                     dim=c(nlon, nlat, ndays)
                 )
-            },
-            split(var.bcca, rep(month.factor, each=ncells)),
-            split(var.qpqm, rep(month.factor, each=ncells))
-        )
+            }
         dqm <- array(unsplit(dqm, rep(month.factor, each=ncells)), dim=c(nlon, nlat, ni))
         print(paste("Writing steps", i_0, "-", i_n, "/", nt, "to file", out.file))
         ncvar_put(nc=out.nc, varid=varname, vals=dqm,
