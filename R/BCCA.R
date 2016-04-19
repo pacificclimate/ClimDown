@@ -268,9 +268,8 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 #' 
 #' @param gcm.file Filename of GCM simulations
 #' @param obs.file Filename of high-res gridded historical observations
-#' @param output.file Cache file for saving the analogues
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
-#' @return NULL
+#' @return A list object with two values: 'indices' and 'weights', each of which is a vector with 30 items
 #'
 #' @export
 bcca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
