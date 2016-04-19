@@ -70,8 +70,13 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
             bcca=split(var.bcca, rep(month.factor, each=ncells)),
             qpqm=split(var.qpqm, rep(month.factor, each=ncells)),
             .multicombine=TRUE,
-            .inorder=TRUE
-            ) %loop% {
+            .inorder=TRUE,
+            .final=function(x) {
+                array(
+                    unsplit(x, rep(month.factor, each=ncells)),
+                    dim=c(nlon, nlat, ni)
+                )
+            }) %do% {
                 bcca <- jitter(bcca, 0.01)
                 ndays <- length(bcca) / ncells
                 dim(bcca) <- c(nlon, nlat, ndays)
@@ -86,11 +91,11 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
                     dim=c(nlon, nlat, ndays)
                 )
             }
-        dqm <- array(unsplit(dqm, rep(month.factor, each=ncells)), dim=c(nlon, nlat, ni))
         print(paste("Writing steps", i_0, "-", i_n, "/", nt, "to file", out.file))
         ncvar_put(nc=out.nc, varid=varname, vals=dqm,
                   start=c(1, 1, i_0), count=c(-1, -1, ni))
     }
+
     nc_close(qpqm.nc)
     nc_close(obs.nc)
     nc_close(out.nc)
