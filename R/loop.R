@@ -7,14 +7,15 @@ if (cores > 1) {
       require(doMPI)
       cl <- startMPIcluster(cores-1)
       registerDoMPI(cl)
+      cl
     }
     else if (backend == 'multicore') {
       require(doParallel)
       registerDoParallel(cores=cores)
+      NULL
     } else {
       stop('Option "par.backend" must be "multicore" or "MPI"')
     }
-    cl
   }
   stop.par.backend <- function(cl) {
     backend <-  getOption('par.backend', 'multicore')
