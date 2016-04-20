@@ -53,7 +53,7 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   chunks <- chunk.indices(length(obs.time), chunk.size)
   # Loop over chunks fo time
   for (i in chunks) {
-    cat(i['start'], i['stop'], '\n')
+    print(paste("Aggregating timesteps", i['start'], "-", i['stop'], "/", length(obs.time)))
     obs <- ncvar_get(nc.obs, varid=varid, start=c(1, 1, i['start']), # get obs for one chunk
                      count=c(-1, -1, i['length']))
     agg <- aggregate.obs.to.gcm.grid(xi, yi, xn, yn, obs)
@@ -289,21 +289,24 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
     gcm.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)
 
+    print("Aggregating observations to GCM scale")
     aggd.obs <- create.aggregates(obs.file, gcm.file, varname)
 
     if (is.pr) {
         aggd.obs[aggd.obs < 0] < 0
     }
 
-    # Read the aggregated obs times
+    print("Reading time values from the aggregated observations")
     nc <- nc_open(obs.file)
     obs.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)
 
+    print("Bias correcting the aggregated observations")
     bc.gcm <- bias.correct.dqm(
         gcm, aggd.obs, obs.time, gcm.time,
         getOption('calibration.start'), getOption('calibration.end'),
         detrend=!is.pr, ratio=is.pr
     )
+    print("Finding an analogous observered timestep for each GCM time step")
     find.all.analogues(bc.gcm, aggd.obs, gcm.time, obs.time)
 }
