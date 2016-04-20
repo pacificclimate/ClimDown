@@ -236,13 +236,19 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
 # gcm.times: PCICt vector of time values for the GCM
 # obs.time: PCICt vector of time values for the aggregated obs
 find.all.analogues <- function(gcm, agged.obs, gcm.times, obs.times) {
-    split(
-        sapply(seq_along(gcm.times), function(i) {
-                   print(paste(i, '/', length(gcm.times)))
-                   find.analogues(gcm[,,i], agged.obs, obs.times, gcm.times[i])
-        }),
-        c('indices', 'weights')
-    )
+    foreach(
+        i=seq_along(gcm.times),
+        .export=c('gcm', 'agged.obs', 'obs.times', 'gcm.times'),
+        .errorhandling='pass',
+        .inorder=TRUE,
+        .final=function(x) {
+            split(unlist(x, recursive=F, use.names=F), c('indices', 'weights'))
+        }
+        ) %dopar% {
+            now <- gcm.times[i]
+            print(format(now))
+            find.analogues(gcm[,,i], agged.obs, obs.times, now)
+    }
 }
 
 mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list()) {
