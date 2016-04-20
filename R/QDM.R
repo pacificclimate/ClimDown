@@ -76,7 +76,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
                     unsplit(x, rep(month.factor, each=ncells)),
                     dim=c(nlon, nlat, ni)
                 )
-            }) %do% {
+            }) %dopar% {
                 bcca <- jitter(bcca, 0.01)
                 ndays <- length(bcca) / ncells
                 dim(bcca) <- c(nlon, nlat, ndays)
