@@ -152,7 +152,7 @@ construct.analogue.weights <- function(obs.at.analogues, gcm.values) {
     Q <- alib %*% t(alib)
     ridge <- getOption('tol') * mean(diag(Q))
     ridge <- diag(n.analogue) * ridge
-    solve(Q + ridge) %*% alib %*% as.matrix(gcm.values)
+    (solve(Q + ridge) %*% alib %*% as.matrix(gcm.values))[,1]
 }
 
 # times: timeseries vector of PCICt types

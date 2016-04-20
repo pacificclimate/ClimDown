@@ -60,7 +60,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         print(paste("Applying analogues to timesteps", i_0, "-", i_n, "/", nt))
         var.bcca <- mapply(
             function(ti, wi) {
-                apply.analogues.netcdf(ti, wi[,1], obs.nc, varname)
+                apply.analogues.netcdf(ti, wi, obs.nc, varname)
             },
             analogues$indices[i_0:i_n],
             analogues$weights[i_0:i_n]
