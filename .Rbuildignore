@@ -1,4 +1,6 @@
 .git
+.travis.yml
+.gitignore
 README.rst
 CONTRIBUTING.rst
-.travis.yml
+doc/
