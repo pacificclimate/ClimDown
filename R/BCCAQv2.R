@@ -15,10 +15,10 @@ bccaqv2.netcdf.wrapper <- function(gcm.file, obs.file, out.file, varname='tasmax
     bcci.netcdf.wrapper(gcm.file, obs.file, bcci.file, varname)
     qpqm.file <- tempfile(fileext='.nc')
     qpqm.netcdf.wrapper(obs.file, bcci.file, qpqm.file, varname)
+    unlink(bcci.file)
     analogues <- bcca.netcdf.wrapper(gcm.file, obs.file, varname)
     qdm.netcdf.wrapper(qpqm.file, obs.file, analogues, out.file, varname)
     unlink(qpqm.file)
-    unlink(bcci.file)
 
     print('Elapsed time')
     print(proc.time() - ptm)
