@@ -84,8 +84,11 @@ chunked.factored.running.mean <- function(nc, fact, var.id, nt.per.chunk=100) {
         print(paste("Reading timesteps", i['start'], ':', i['stop'], '/', nt, 'from file:', nc$filename))
         x <- ncvar_get(nc, varid=var.id, start=c(1, 1, i['start']), # get obs for one chunk
                        count=c(-1, -1, i['length']))
-        if (var.id=='pr')
-          x[x<0] <- 0
+
+        if (var.id == 'pr') {
+          x[x < 0] <- 0
+        }
+
         print("Computing the temporal mean")
         # get the sum across time (to be averaged)
         subsum <- aperm(
@@ -107,18 +110,10 @@ chunked.factored.running.mean <- function(nc, fact, var.id, nt.per.chunk=100) {
             apply(rv[,,l,drop=F], 1:2, '*', ((t[l] - lengths[l]) / t[l])),
             dim=c(length(l), dims[1:2])
         )
-        #previous.mean[is.nan(previous.mean)] <- 0 # means will be NaN for where t == 0
         current.mean <- array(
             apply(subsum[,,l,drop=F], 1:2, '/', t[l]),
             dim=c(length(l), dims[1:2])
         )            
-        #current.mean[is.nan(current.mean)] <- 0 # means will be NaN for where t == 0
-        #if (any(is.nan(previous.mean) | is.nan(current.mean))) {
-        #    browser()
-        #}
-        #if (i['start'] == 22251) {
-        #    browser()
-        #}
         rv[,,l] <- aperm( previous.mean + current.mean, c(2, 3, 1))
     }
     rv
