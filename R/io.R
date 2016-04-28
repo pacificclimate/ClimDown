@@ -2,7 +2,7 @@ CD_ncvar_get <- function(nc, varid=NA, start=NA, count=NA, verbose=FALSE,
                          signedbyte=TRUE) {
     x <- ncvar_get(nc, varid, start, count, verbose, signedbyte, collapse_degen=FALSE)
 
-    if (var.id == 'pr') {
+    if (varid == 'pr') {
         x[x < 0] <- 0
     }
 
