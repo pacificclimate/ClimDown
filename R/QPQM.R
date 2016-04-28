@@ -231,14 +231,14 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
 
         o.c.chunk <- CD_ncvar_get(obs, start=c(chunk['start'], 1, obs.time$t0),
                                   count=c(chunk['length'], -1, obs.time$n),
-                                  varid=varname, collapse_degen=FALSE)
+                                  varid=varname)
 
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', gcm$filename))
         print(paste("... and reading latitudes 1 -", length(lat), '/', length(lat)))
 
         m.p.chunk <- CD_ncvar_get(gcm, start=c(chunk['start'], 1, gcm.time$t0),
                                   count=c(chunk['length'], -1, gcm.time$n),
-                                  varid=varname, collapse_degen=FALSE)
+                                  varid=varname)
 
         xn <- dim(o.c.chunk)[1]
         yn <- dim(o.c.chunk)[2]
