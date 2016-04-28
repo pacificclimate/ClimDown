@@ -51,11 +51,8 @@ apply.climatologies.nc <- function(nc, clima, monthly.factor, varname='tasmax', 
     chunks <- chunk.indices(nt, nt.per.chunk)
     for (i in chunks) {
         print(paste("Applying climatologies to file", nc$filename, "steps", i['start'], ':', i['stop'], '/', nt))
-        x <- ncvar_get(nc, varid=varname, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
+        x <- CD_ncvar_get(nc, varid=varname, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
         t <- monthly.factor[i['start']:i['stop']]
-        if (varname == 'pr') {
-            x[x < 0] <- 0
-        }
         x <- x %op% clima[,,t]
 
         ncvar_put(nc, varid=varname, vals=x, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
@@ -82,12 +79,8 @@ chunked.factored.running.mean <- function(nc, fact, var.id, nt.per.chunk=100) {
 
         # fetch the data
         print(paste("Reading timesteps", i['start'], ':', i['stop'], '/', nt, 'from file:', nc$filename))
-        x <- ncvar_get(nc, varid=var.id, start=c(1, 1, i['start']), # get obs for one chunk
+        x <- CD_ncvar_get(nc, varid=var.id, start=c(1, 1, i['start']), # get obs for one chunk
                        count=c(-1, -1, i['length']))
-
-        if (var.id == 'pr') {
-          x[x < 0] <- 0
-        }
 
         print("Computing the temporal mean")
         # get the sum across time (to be averaged)
@@ -175,7 +168,7 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
 # FIXME: this name is duplicated from BCCA.R
 mk.output.ncdf <- function(file.name, varname, gcm.template, obs.template, global.attrs=list()) {
     dims <- c(obs.template$var[[varname]]$dim[1:2], gcm.template$var[[varname]]$dim[3])
-    var <- ncvar_def(varname, gcm.template$var[[varname]]$units, dims)
+    var <- ncvar_def(varname, target.units[varname], dims)
     nc <- nc_create(file.name, var)
     mapply(function(name, value) {
         ncatt_put(nc, varid=0, attname=name, attval=value)
@@ -216,11 +209,9 @@ nc_gety <- function(nc) {
 bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
 
     nc.gcm <- nc_open(gcm.file)
-    gcm <- ncvar_get(nc.gcm, varname)
+    gcm <- CD_ncvar_get(nc.gcm, varname)
     gcm.lats <- nc_gety(nc.gcm)
     gcm.lons <- nc_getx(nc.gcm)
-    units <- ncatt_get(nc.gcm, varname, 'units')$value
-    gcm <- ud.convert(gcm, units, target.units[varname])
     gcm.times <- netcdf.calendar(nc.gcm)
     
     print('Calculating daily anomalies on the GCM')

@@ -54,7 +54,7 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   # Loop over chunks fo time
   for (i in chunks) {
     print(paste("Aggregating timesteps", i['start'], "-", i['stop'], "/", length(obs.time)))
-    obs <- ncvar_get(nc.obs, varid=varid, start=c(1, 1, i['start']), # get obs for one chunk
+    obs <- CD_ncvar_get(nc.obs, varid=varid, start=c(1, 1, i['start']), # get obs for one chunk
                      count=c(-1, -1, i['length']))
     agg <- aggregate.obs.to.gcm.grid(xi, yi, xn, yn, obs)
     aggregates[min(xi):max(xi), min(yi):max(yi), i['start']:i['stop']] <- agg
@@ -132,12 +132,12 @@ apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasma
     apply(
         array(
             mapply(function(i, w) {
-                       ncvar_get(nc=obs.nc, varid=varid,
-                                 start=c(1, 1, i),
-                                 count=c(-1, -1, 1)) * w
-                   },
-                   analog.indices, weights
-                   ),
+                CD_ncvar_get(nc=obs.nc, varid=varid,
+                             start=c(1, 1, i),
+                             count=c(-1, -1, 1)) * w
+            },
+            analog.indices, weights
+            ),
             dim=dims,
             ),
         1:2, sum
@@ -283,14 +283,7 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
 
     # Read in GCM data
     nc <- nc_open(gcm.file)
-    gcm <- ncvar_get(nc, varname)
-
-    units <- ncatt_get(nc, varname, 'units')$value
-    gcm <- ud.convert(gcm, units, target.units[varname])
-
-    if (is.pr) {
-        gcm[gcm < 0] < 0
-    }
+    gcm <- CD_ncvar_get(nc, varname)
 
     gcm.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)

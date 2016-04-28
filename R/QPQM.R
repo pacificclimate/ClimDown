@@ -210,7 +210,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     cat('Creating output file', out.file, '\n')
     # FIXME: The GCM time needs to be clipped to cstart
     dims <- gcm$var[[varname]]$dim
-    vars <- ncvar_def(varname, gcm$var[[varname]]$units, dims)
+    vars <- ncvar_def(varname, target.units[varname], dims)
     out <- nc_create(out.file, vars)
 
     na.gcm <- rep(NA, gcm.time$n)
@@ -229,16 +229,16 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', obs$filename))
         print(paste("... and reading latitudes 1 -", length(lat), '/', length(lat)))
 
-        o.c.chunk <- ncvar_get(obs, start=c(chunk['start'], 1, obs.time$t0),
-                               count=c(chunk['length'], -1, obs.time$n),
-                               varid=varname, collapse_degen=FALSE)
+        o.c.chunk <- CD_ncvar_get(obs, start=c(chunk['start'], 1, obs.time$t0),
+                                  count=c(chunk['length'], -1, obs.time$n),
+                                  varid=varname, collapse_degen=FALSE)
 
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', gcm$filename))
         print(paste("... and reading latitudes 1 -", length(lat), '/', length(lat)))
 
-        m.p.chunk <- ncvar_get(gcm, start=c(chunk['start'], 1, gcm.time$t0),
-                               count=c(chunk['length'], -1, gcm.time$n),
-                               varid=varname, collapse_degen=FALSE)
+        m.p.chunk <- CD_ncvar_get(gcm, start=c(chunk['start'], 1, gcm.time$t0),
+                                  count=c(chunk['length'], -1, gcm.time$n),
+                                  varid=varname, collapse_degen=FALSE)
 
         xn <- dim(o.c.chunk)[1]
         yn <- dim(o.c.chunk)[2]
