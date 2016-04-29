@@ -1,11 +1,12 @@
 exec.chunked.factored.running.mean <- function(n) {
     ## create a netcdf file
+    varid <- 'tasmax'
     dims <- list(ncdim_def('x', '', 1:2), ncdim_def('y', '', 1:3), ncdim_def('t', '', 1:8))
-    var <- ncvar_def('tas', '', dims)
+    var <- ncvar_def(varid, 'degC', dims)
     nc <- nc_create(tempfile(fileext='.nc'), var)
     
     x <- array(rep(1:8, each=6), dim=c(2, 3, 8))
-    ncvar_put(nc, 'tas', x, c(1, 1, 1), c(-1, -1, -1))
+    ncvar_put(nc, varid, x, c(1, 1, 1), c(-1, -1, -1))
 
     f <- factor(rep(1:2, each=4))
 
