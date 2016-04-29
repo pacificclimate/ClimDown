@@ -90,7 +90,7 @@ bias.correct.dqm <- function(gcm, aggd.obs,
 
     t0 <- as.PCICt(historical.start, attr(obs.time, 'cal'))
     tn <- as.PCICt(historical.end, attr(obs.time, 'cal'))
-    hist.period.obs <- obs.time >= t0 & obs.time <= tn
+    ti <- compute.time.overlap(obs.time, t0, tn)
 
     points <- na.unmasked(aggd.obs[,,1])
 
@@ -100,10 +100,10 @@ bias.correct.dqm <- function(gcm, aggd.obs,
         if (all(is.na(gcm[x,y,]))) {
             rep(NA,dim(gcm)[3])
         } else {
-            dqm.tmp <- mnDQM(obs.h=aggd.obs[x,y, hist.period.obs],
+            dqm.tmp <- mnDQM(obs.h=aggd.obs[x,y, ti],
                              gcm.h=gcm[x,y, hist.period.gcm],
                              gcm.f=gcm[x,y, future.period],
-                             months.obs.h=as.numeric(format(obs.time[hist.period.obs], '%m')),
+                             months.obs.h=as.numeric(format(obs.time[ti], '%m')),
                              months.gcm.h=as.numeric(format(gcm.time[hist.period.gcm], '%m')),
                              months.gcm.f=as.numeric(format(gcm.time[future.period], '%m')),
                              gcm.p=gcm[x,y, prehist.period],
