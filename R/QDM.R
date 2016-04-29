@@ -23,7 +23,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
 
     cat('Creating output file', out.file, '\n')
     dims <- qpqm.nc$var[[varname]]$dim
-    vars <- ncvar_def(varname, target.units[varname], dims)
+    vars <- ncvar_def(varname, getOption('target.units')[varname], dims)
     out.nc <- nc_create(out.file, vars)
 
     nlat <- qpqm.nc$dim$lat$len

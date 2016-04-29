@@ -168,7 +168,7 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
 # FIXME: this name is duplicated from BCCA.R
 mk.output.ncdf <- function(file.name, varname, gcm.template, obs.template, global.attrs=list()) {
     dims <- c(obs.template$var[[varname]]$dim[1:2], gcm.template$var[[varname]]$dim[3])
-    var <- ncvar_def(varname, target.units[varname], dims)
+    var <- ncvar_def(varname, getOption('target.units')[varname], dims)
     nc <- nc_create(file.name, var)
     mapply(function(name, value) {
         ncatt_put(nc, varid=0, attname=name, attval=value)

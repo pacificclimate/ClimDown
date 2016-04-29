@@ -210,7 +210,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     cat('Creating output file', out.file, '\n')
     # FIXME: The GCM time needs to be clipped to cstart
     dims <- gcm$var[[varname]]$dim
-    vars <- ncvar_def(varname, target.units[varname], dims)
+    vars <- ncvar_def(varname, getOption('target.units')[varname], dims)
     out <- nc_create(out.file, vars)
 
     na.gcm <- rep(NA, gcm.time$n)

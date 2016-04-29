@@ -7,5 +7,5 @@ CD_ncvar_get <- function(nc, varid=NA, start=NA, count=NA, verbose=FALSE,
     }
 
     units <- ncatt_get(nc, varid, 'units')$value
-    ud.convert(x, units, target.units[varid])
+    ud.convert(x, units, getOption('target.units')[varid])
 }
