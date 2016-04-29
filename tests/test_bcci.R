@@ -10,7 +10,7 @@ exec.chunked.factored.running.mean <- function(n) {
     f <- factor(rep(1:2, each=4))
 
     ## Chunks align with factor
-    rv <- chunked.factored.running.mean(nc, f, 'tas', nt.per.chunk=n)
+    rv <- ClimDown:::chunked.factored.running.mean(nc, f, varid, nt.per.chunk=n)
     expected <- array(rep(c(2.5, 6.5), each=6), dim=c(2, 3, 2))
     checkEquals(rv, expected)
 }
