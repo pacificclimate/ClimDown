@@ -63,7 +63,7 @@ mk.multiyear.factor <- function(dates, block.size, expand.multiyear=TRUE) {
 
     block.factor <- factor(years - years %% block.size)
 
-    if(expand.multiyear) {
+    if(expand.multiyear && nlevels(block.factor) > 1) {
         # Fold incomplete data from the final block into the previous
         # complete multi-year block
         multiyear.lengths <- tapply(block.factor, block.factor, length)
