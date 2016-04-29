@@ -28,3 +28,9 @@ test.chunked.factored.running.mean.dim.not.aligned <- function() {
     exec.chunked.factored.running.mean(7)
 }
 
+test.bcci.netcdf.wrapper <- function() {
+    out.nc <- tempfile(fileext='.nc')
+    ClimDown::bcci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', out.nc)
+    unlink(out.nc)
+    checkTrue(TRUE)
+}
