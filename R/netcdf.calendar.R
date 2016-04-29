@@ -33,7 +33,7 @@ compute.time.stats <- function(nc, start=NULL, end=NULL) {
   }
   t0 <- as.PCICt(start, cal=attr(vals, 'cal'))
   tn <- as.PCICt(end, cal=attr(vals, 'cal'))
-  i <- vals >= t0 & vals <= tn
+  i <- compute.time.overlap(vals, t0, tn)
   vals <- vals[i]
   list(vals=vals,
        i=i,
@@ -41,4 +41,22 @@ compute.time.stats <- function(nc, start=NULL, end=NULL) {
        tn=max(which(i)),
        n=length(vals)
        )
+}
+
+compute.time.overlap <- function(timevals, t0, tn, error=TRUE) {
+    ti <- timevals >= t0 & timevals <= tn
+    if (! any(ti)) {
+        d <- format(c(t0, tn, range(timevals)), '%Y-%m-%d')
+        msg <- paste(
+            c("The configured calibration period (", d[1:2],
+              ") does not overlap with the GCM time period (", d[3:4], ")"),
+            collapse=' '
+            )
+        if (error) {
+            stop(msg)
+        } else {
+            warning(msg)
+        }
+    }
+    ti
 }

@@ -15,7 +15,7 @@ monthly.climatologies <- function(gcm, gcm.times) {
 # O(2n) time, O(2n) space
 daily.anomalies <- function(gcm, gcm.times, cal.start, cal.end, varname) {
     `%op%` <- ifelse (varname == 'pr', `/`, `-`)
-    ti <- gcm.times >= cal.start & gcm.times <= cal.end
+    ti <- compute.time.overlap(gcm.times, cal.start, cal.end)
     clima <- monthly.climatologies(gcm[,,ti], gcm.times[ti])
     months <- as.integer(format(gcm.times, '%m'))
     array(
