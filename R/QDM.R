@@ -61,6 +61,10 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         var.bcca <- foreach(
             ti=analogues$indices[i_0:i_n],
             wi=analogues$weights[i_0:i_n],
+            .export=c('obs.nc', 'varname'),
+            .final=function(x) {
+                array(unlist(x), dim=c(ncells, nt))
+            }
             ) %dopar% {
                 apply.analogues.netcdf(ti, wi, obs.nc, varname)
             }

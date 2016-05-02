@@ -5,7 +5,7 @@
     bcci.file <- tempfile(fileext='.nc')
     ClimDown::bcci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', bcci.file, 'tasmax')
     qpqm.file <<- tempfile(fileext='.nc')
-    qpqm.netcdf.wrapper('./tiny_obs.nc', bcci.file, qpqm.file, 'tasmax')
+    ClimDown::qpqm.netcdf.wrapper('./tiny_obs.nc', bcci.file, qpqm.file, 'tasmax')
     unlink(bcci.file)
     analogues <<- ClimDown::bcca.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc')
 }
