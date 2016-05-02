@@ -246,7 +246,6 @@ find.all.analogues <- function(gcm, agged.obs, gcm.times, obs.times) {
         }
         ) %dopar% {
             now <- gcm.times[i]
-            print(format(now))
             find.analogues(gcm[,,i], agged.obs, obs.times, now)
     }
 }
