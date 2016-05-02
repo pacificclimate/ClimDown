@@ -251,7 +251,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         m.p.chunk <- foreach(o.c=split(o.c.chunk, 1:ncells),
                              m.p=split(m.p.chunk, 1:ncells),
                              .combine=c, .multicombine=TRUE, .inorder=TRUE,
-                             .export=c('na.gcm', 'tQPQM', 'varname', 'gcm.obs.subset.i', 'time.factors', 'QPQM')) %do% {
+                             .export=c('na.gcm', 'tQPQM', 'varname', 'gcm.obs.subset.i', 'time.factors', 'QPQM')) %dopar% {
 
           if(all(is.na(o.c), is.na(m.p))) {
             na.gcm
