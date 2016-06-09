@@ -83,8 +83,21 @@ mnDQM <-
 # n.max = maximum number of tau-quantiles to estimate
 function(obs.h, gcm.h, gcm.f, months.obs.h, months.gcm.h, months.gcm.f,
          gcm.p=NULL, months.gcm.p=NULL, ratio=TRUE, detrend=TRUE,
-         missing.flag=-99.9, n.max=NULL)
-{
+         missing.flag=-99.9, n.max=NULL) {
+
+    if (length(gcm.p) == 0) {
+        gcm.p <- NULL
+    }
+    if (length(gcm.h) == 0 || length(gcm.f) == 0) {
+        stop(paste("mnDQM received either a historical or future period of length",
+             "zero, which is an error. Check your configuration options",
+             "'calibration.start' and 'calibration.end' (",
+             getOption('calibration.start'), getOption('calibration.end'),
+             ") and ensure that the GCM time covers the range and extends",
+             "beyond it into the future")
+         )
+    }
+
     obs.h.months <- split(obs.h, months.obs.h)
     gcm.h.months <- split(gcm.h, months.gcm.h)
     gcm.f.months <- split(gcm.f, months.gcm.f)
@@ -92,7 +105,7 @@ function(obs.h, gcm.h, gcm.f, months.obs.h, months.gcm.h, months.gcm.f,
     indices.h.months <- split(seq_along(gcm.h), months.gcm.h)
     gcm.f.correct <- gcm.f*0
     gcm.h.correct <- gcm.h*0
-    if(length(gcm.p)==0) gcm.p <- NULL
+
     if(!is.null(gcm.p)){
         indices.p.months <- split(seq_along(gcm.p), months.gcm.p)
         gcm.p.months <- split(gcm.p, months.gcm.p)

@@ -54,7 +54,7 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   # Loop over chunks fo time
   for (i in chunks) {
     print(paste("Aggregating timesteps", i['start'], "-", i['stop'], "/", length(obs.time)))
-    obs <- ncvar_get(nc.obs, varid=varid, start=c(1, 1, i['start']), # get obs for one chunk
+    obs <- CD_ncvar_get(nc.obs, varid=varid, start=c(1, 1, i['start']), # get obs for one chunk
                      count=c(-1, -1, i['length']))
     agg <- aggregate.obs.to.gcm.grid(xi, yi, xn, yn, obs)
     aggregates[min(xi):max(xi), min(yi):max(yi), i['start']:i['stop']] <- agg
@@ -90,7 +90,7 @@ bias.correct.dqm <- function(gcm, aggd.obs,
 
     t0 <- as.PCICt(historical.start, attr(obs.time, 'cal'))
     tn <- as.PCICt(historical.end, attr(obs.time, 'cal'))
-    hist.period.obs <- obs.time >= t0 & obs.time <= tn
+    ti <- compute.time.overlap(obs.time, t0, tn)
 
     points <- na.unmasked(aggd.obs[,,1])
 
@@ -100,10 +100,10 @@ bias.correct.dqm <- function(gcm, aggd.obs,
         if (all(is.na(gcm[x,y,]))) {
             rep(NA,dim(gcm)[3])
         } else {
-            dqm.tmp <- mnDQM(obs.h=aggd.obs[x,y, hist.period.obs],
+            dqm.tmp <- mnDQM(obs.h=aggd.obs[x,y, ti],
                              gcm.h=gcm[x,y, hist.period.gcm],
                              gcm.f=gcm[x,y, future.period],
-                             months.obs.h=as.numeric(format(obs.time[hist.period.obs], '%m')),
+                             months.obs.h=as.numeric(format(obs.time[ti], '%m')),
                              months.gcm.h=as.numeric(format(gcm.time[hist.period.gcm], '%m')),
                              months.gcm.f=as.numeric(format(gcm.time[future.period], '%m')),
                              gcm.p=gcm[x,y, prehist.period],
@@ -132,12 +132,12 @@ apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasma
     apply(
         array(
             mapply(function(i, w) {
-                       ncvar_get(nc=obs.nc, varid=varid,
-                                 start=c(1, 1, i),
-                                 count=c(-1, -1, 1)) * w
-                   },
-                   analog.indices, weights
-                   ),
+                CD_ncvar_get(nc=obs.nc, varid=varid,
+                             start=c(1, 1, i),
+                             count=c(-1, -1, 1)) * w
+            },
+            analog.indices, weights
+            ),
             dim=dims,
             ),
         1:2, sum
@@ -246,7 +246,6 @@ find.all.analogues <- function(gcm, agged.obs, gcm.times, obs.times) {
         }
         ) %dopar% {
             now <- gcm.times[i]
-            print(format(now))
             find.analogues(gcm[,,i], agged.obs, obs.times, now)
     }
 }
@@ -283,14 +282,7 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
 
     # Read in GCM data
     nc <- nc_open(gcm.file)
-    gcm <- ncvar_get(nc, varname)
-
-    units <- ncatt_get(nc, varname, 'units')$value
-    gcm <- ud.convert(gcm, units, target.units[varname])
-
-    if (is.pr) {
-        gcm[gcm < 0] < 0
-    }
+    gcm <- CD_ncvar_get(nc, varname)
 
     gcm.time <- netcdf.calendar(nc, 'time')
     nc_close(nc)

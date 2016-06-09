@@ -23,7 +23,8 @@
         cend=as.POSIXct('2000-12-31', tz='GMT'),
         tau=list(pr=1001, tasmax=101, tasmin=101),
         seasonal=list(pr=TRUE, tasmax=FALSE, tasmin=FALSE),
-        ratio=list(pr=TRUE, tasmax=FALSE, tasmin=FALSE)
+        ratio=list(pr=TRUE, tasmax=FALSE, tasmin=FALSE),
+        target.units=c(tasmax='celsius', tasmin='celsius', pr='kg m-2 d-1') ##pr='mm day-1')
     )
 
     toset <- !(names(cd.options) %in% names(op))
@@ -31,7 +32,6 @@
     if(any(toset)) options(cd.options[toset])
 }
 
-target.units <- c(tasmax='celsius', tasmin='celsius', pr='kg m-2 d-1') ##pr='mm day-1')
 
 # Takes a vector length and chunk size
 # returns a list of (start, stop, length)

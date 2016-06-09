@@ -63,7 +63,7 @@ mk.multiyear.factor <- function(dates, block.size, expand.multiyear=TRUE) {
 
     block.factor <- factor(years - years %% block.size)
 
-    if(expand.multiyear) {
+    if(expand.multiyear && nlevels(block.factor) > 1) {
         # Fold incomplete data from the final block into the previous
         # complete multi-year block
         multiyear.lengths <- tapply(block.factor, block.factor, length)
@@ -210,7 +210,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     cat('Creating output file', out.file, '\n')
     # FIXME: The GCM time needs to be clipped to cstart
     dims <- gcm$var[[varname]]$dim
-    vars <- ncvar_def(varname, gcm$var[[varname]]$units, dims)
+    vars <- ncvar_def(varname, getOption('target.units')[varname], dims)
     out <- nc_create(out.file, vars)
 
     na.gcm <- rep(NA, gcm.time$n)
@@ -229,16 +229,16 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', obs$filename))
         print(paste("... and reading latitudes 1 -", length(lat), '/', length(lat)))
 
-        o.c.chunk <- ncvar_get(obs, start=c(chunk['start'], 1, obs.time$t0),
-                               count=c(chunk['length'], -1, obs.time$n),
-                               varid=varname, collapse_degen=FALSE)
+        o.c.chunk <- CD_ncvar_get(obs, start=c(chunk['start'], 1, obs.time$t0),
+                                  count=c(chunk['length'], -1, obs.time$n),
+                                  varid=varname)
 
         print(paste("Reading longitudes", chunk['start'], '-', chunk['stop'], '/', length(lon), 'from file:', gcm$filename))
         print(paste("... and reading latitudes 1 -", length(lat), '/', length(lat)))
 
-        m.p.chunk <- ncvar_get(gcm, start=c(chunk['start'], 1, gcm.time$t0),
-                               count=c(chunk['length'], -1, gcm.time$n),
-                               varid=varname, collapse_degen=FALSE)
+        m.p.chunk <- CD_ncvar_get(gcm, start=c(chunk['start'], 1, gcm.time$t0),
+                                  count=c(chunk['length'], -1, gcm.time$n),
+                                  varid=varname)
 
         xn <- dim(o.c.chunk)[1]
         yn <- dim(o.c.chunk)[2]
@@ -251,7 +251,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         m.p.chunk <- foreach(o.c=split(o.c.chunk, 1:ncells),
                              m.p=split(m.p.chunk, 1:ncells),
                              .combine=c, .multicombine=TRUE, .inorder=TRUE,
-                             .export=c('na.gcm', 'tQPQM', 'varname', 'gcm.obs.subset.i', 'time.factors', 'QPQM')) %do% {
+                             .export=c('na.gcm', 'tQPQM', 'varname', 'gcm.obs.subset.i', 'time.factors', 'QPQM')) %dopar% {
 
           if(all(is.na(o.c), is.na(m.p))) {
             na.gcm
