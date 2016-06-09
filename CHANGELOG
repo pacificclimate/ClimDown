@@ -1,3 +1,14 @@
+## [0.2.0] - 2016-06-08
+### Bugfix and testing release
+- Adds integration tests for all downscaling methods and sets thereof
+- Add tests for BCCI's chunked.factored.running.mean
+- Factors out variable reading to perform all unit conversion and negative precip removal in one place
+- Adds better logic for checking for overlap in configured time ranges
+- Fixes a corner case in QPQM's muliyear block mode
+- Adds a config option for 'target.units'
+- Ensures that QDM and QPQM both use parallel main loops if available
+- Adds a repo README and contributors' guide
+
 ## [0.1.0] - 2016-04-20
 ### First Release
 - All QDM/BCCAQv2 methods are fully implemented and can be run
