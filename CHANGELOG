@@ -1,3 +1,7 @@
+## [0.2.1] - 2016-06-23
+### Bugfix release
+- Reverts parallel support for BCCA analogue application (pending investigation)
+
 ## [0.2.0] - 2016-06-08
 ### Bugfix and testing release
 - Adds integration tests for all downscaling methods and sets thereof
