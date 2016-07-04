@@ -128,7 +128,7 @@ apply.analogue <- function(x, weights) {
 # weights: vector of length num.analogues corresponding to the analog indices
 # obs.nc: An open netcdf file containing gridded observations
 apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasmax') {
-    dims <- obs.nc$var[[varid]]$size[1:2]
+    dims <- c(obs.nc$var[[varid]]$size[1:2],getOption('n.analogues'))
     apply(
         array(
             mapply(function(i, w) {
