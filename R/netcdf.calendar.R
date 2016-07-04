@@ -25,9 +25,9 @@ function(nc, time.variable='time') {
 
 compute.time.stats <- function(nc, start=NULL, end=NULL) {
   vals <- netcdf.calendar(nc, 'time')
-##  if (is.null(start)) {
+  if (is.null(start)) {
     start <- vals[1]
-##  }
+  }
   if (is.null(end)) {
     end <- vals[length(vals)]
   }

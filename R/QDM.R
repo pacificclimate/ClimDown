@@ -67,12 +67,6 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         )
         var.bcca[var.bcca<0] <- 0
 
-        bcca.matrix <- var.bcca
-        dim(bcca.matrix) <- c(nlon,nlat,55115)
-        bcca.nc <- mk.output.ncdf('/local_temp/ssobie/output/bcca_test.nc', varname, qpqm.nc, obs.nc)
-        ncvar_put(bcca.nc,varid=varname,vals=bcca.matrix)
-        nc_close(bcca.nc)
-
         dqm <- foreach(
             bcca=split(var.bcca, rep(month.factor, each=ncells)),
             qpqm=split(var.qpqm, rep(month.factor, each=ncells)),
