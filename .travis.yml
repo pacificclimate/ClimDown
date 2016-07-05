@@ -1,10 +1,12 @@
 language: r
-sudo: true
+sudo: false
 cache: packages
-apt_packages:
-  - libnetcdf-dev
-  - netcdf-bin
-  - libudunits2-dev
+addons:
+  apt:
+    packages:
+      - libnetcdf-dev
+      - netcdf-bin
+      - libudunits2-dev
 r_packages:
   - roxygen2
 before_script:

@@ -19,8 +19,6 @@
         multiyear.window.length=30,
         trace=0.005,
         jitter.factor=0.01,
-        cstart=as.POSIXct('1971-01-01', tz='GMT'),
-        cend=as.POSIXct('2000-12-31', tz='GMT'),
         tau=list(pr=1001, tasmax=101, tasmin=101),
         seasonal=list(pr=TRUE, tasmax=FALSE, tasmin=FALSE),
         ratio=list(pr=TRUE, tasmax=FALSE, tasmin=FALSE),

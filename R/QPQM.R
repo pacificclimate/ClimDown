@@ -182,8 +182,8 @@ tQPQM <- function(o.c, m.c, m.p,
 qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
     ptm <- proc.time()
 
-    cstart <- getOption('cstart')
-    cend <- getOption('cend')
+    cstart <- getOption('calibration.start')
+    cend <- getOption('calibration.end')
 
     print("Opening the input files and reading metadata")
     gcm <- nc_open(gcm.file)
@@ -192,7 +192,7 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
     lat <- gcm$dim$lat$vals
     lon <- gcm$dim$lon$vals
 
-    gcm.time <- compute.time.stats(gcm, cstart)
+    gcm.time <- compute.time.stats(gcm)
     obs.time <- compute.time.stats(obs, cstart, cend)
     # indices for gcm time that are within the observational time range
     gcm.obs.subset.i <- gcm.time$vals > as.PCICt(cstart, attr(gcm.time$vals, 'cal')) & gcm.time$vals < as.PCICt(cend, attr(gcm.time$vals, 'cal'))
@@ -208,7 +208,6 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
                                   )
 
     cat('Creating output file', out.file, '\n')
-    # FIXME: The GCM time needs to be clipped to cstart
     dims <- gcm$var[[varname]]$dim
     vars <- ncvar_def(varname, getOption('target.units')[varname], dims)
     out <- nc_create(out.file, vars)

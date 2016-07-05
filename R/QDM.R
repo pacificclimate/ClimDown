@@ -1,5 +1,5 @@
 reorder <- function(x,ix) {
-  rx <- x[ix]
+  rx <- sort(x)[ix]
   return(rx)
 }
 
@@ -65,6 +65,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
             analogues$indices[i_0:i_n],
             analogues$weights[i_0:i_n]
         )
+        var.bcca <- positive_pr(var.bcca, varname)
 
         dqm <- foreach(
             bcca=split(var.bcca, rep(month.factor, each=ncells)),

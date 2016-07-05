@@ -128,15 +128,18 @@ apply.analogue <- function(x, weights) {
 # weights: vector of length num.analogues corresponding to the analog indices
 # obs.nc: An open netcdf file containing gridded observations
 apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasmax') {
-    dims <- obs.nc$var[[varid]]$size[1:2]
+    dims <- c(obs.nc$var[[varid]]$size[1:2],getOption('n.analogues'))
     apply(
         array(
-            mapply(function(i, w) {
-                CD_ncvar_get(nc=obs.nc, varid=varid,
-                             start=c(1, 1, i),
-                             count=c(-1, -1, 1)) * w
-            },
-            analog.indices, weights
+            positive_pr(
+                mapply(function(i, w) {
+                    CD_ncvar_get(nc=obs.nc, varid=varid,
+                                 start=c(1, 1, i),
+                                 count=c(-1, -1, 1)) * w
+                },
+                analog.indices, weights
+                ),
+                varid
             ),
             dim=dims,
             ),
@@ -290,9 +293,7 @@ bcca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
     print("Aggregating observations to GCM scale")
     aggd.obs <- create.aggregates(obs.file, gcm.file, varname)
 
-    if (is.pr) {
-        aggd.obs[aggd.obs < 0] < 0
-    }
+    aggd.obs <- positive_pr(aggd.obs, varname)
 
     print("Reading time values from the aggregated observations")
     nc <- nc_open(obs.file)
