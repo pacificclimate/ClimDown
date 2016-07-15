@@ -33,10 +33,10 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
   # Read fine-scale and GCM grid dimensions
   nc.obs <- nc_open(obs.file)
   nc.gcm <- nc_open(gcm.file)
-  obs.lons <- ncvar_get(nc.obs, 'lon')
-  obs.lats <- ncvar_get(nc.obs, 'lat')
-  gcm.lons <- ncvar_get(nc.gcm, 'lon')-360
-  gcm.lats <- ncvar_get(nc.gcm, 'lat')
+  obs.lons <- nc_getx(nc.obs)
+  obs.lats <- nc_gety(nc.obs)
+  gcm.lons <- nc_getx(nc.gcm)
+  gcm.lats <- nc_gety(nc.gcm)
   obs.time <- netcdf.calendar(nc.obs, 'time')
 
   # Figure out which GCM grid boxes are associated with each fine-scale grid point
