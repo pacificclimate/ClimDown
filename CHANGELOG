@@ -1,10 +1,14 @@
+## [0.2.3] - 2016-07-15
+### Bugfix release
+- Adds robustness to BCCA grid aggregation
+
 ## [0.2.2] - 2016-07-05
 ### Bugfix release
 - Adds a third dimension of n.analogues to apply analogues function
 - Combines calibration date user options
 - Uses spatially sorted order in QPQM reordering
 - Ensures negative precip is removed from all pipeline stages
-- Omits the use of calibration start date for the GCM in QPQM 
+- Omits the use of calibration start date for the GCM in QPQM
 - Ports TravisCI to use native R language support without sudo
 
 ## [0.2.1] - 2016-06-23
