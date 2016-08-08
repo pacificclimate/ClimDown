@@ -20,6 +20,9 @@
         tau=list(pr=1001, tasmax=101, tasmin=101),
         seasonal=list(pr=TRUE, tasmax=FALSE, tasmin=FALSE),
         ratio=list(pr=TRUE, tasmax=FALSE, tasmin=FALSE),
+        # Data processing options
+        check.units=TRUE,
+        check.neg.precip=TRUE,
         target.units=c(tasmax='celsius', tasmin='celsius', pr='kg m-2 d-1') ##pr='mm day-1')
     )
 

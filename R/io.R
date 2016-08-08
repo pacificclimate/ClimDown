@@ -6,10 +6,17 @@ positive_pr <- function(x, varid) {
 }
 
 CD_ncvar_get <- function(nc, varid=NA, start=NA, count=NA, verbose=FALSE,
-                         signedbyte=TRUE) {
+                         signedbyte=TRUE, source.units=NULL) {
     x <- ncvar_get(nc, varid, start, count, verbose, signedbyte, collapse_degen=FALSE)
-    x <- positive_pr(x, varid)
-
-    units <- ncatt_get(nc, varid, 'units')$value
-    ud.convert(x, units, getOption('target.units')[varid])
+    if (getOption('check.neg.precip')) {
+        x <- positive_pr(x, varid)
+    }
+    if (getOption('check.units')) {
+        if (is.null(source.units)) {
+            source.units <- ncatt_get(nc, varid, 'units')$value
+        }
+        ud.convert(x, source.units, getOption('target.units')[varid])
+    } else {
+        x
+    }
 }
