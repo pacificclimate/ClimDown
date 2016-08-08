@@ -66,6 +66,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
             analogues$weights[i_0:i_n]
         )
         var.bcca <- positive_pr(var.bcca, varname)
+        by.month <- rep(month.factor, each=ncells)
 
         dqm <- foreach(
             bcca=split(var.bcca, rep(month.factor, each=ncells)),
@@ -74,22 +75,22 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
             .inorder=TRUE,
             .final=function(x) {
                 array(
-                    unsplit(x, rep(month.factor, each=ncells)),
+                    unsplit(x, by.month),
                     dim=c(nlon, nlat, ni)
                 )
             }) %dopar% {
                 bcca <- jitter(bcca, 0.01)
                 ndays <- length(bcca) / ncells
-                dim(bcca) <- c(nlon, nlat, ndays)
-                ranks <- apply(bcca, 1:2, rank, ties.method='average')
-                ## Reorder the days of qpqm
+                by.cell <- rep(1:ncells, each=ndays)
+                bcca <- split(bcca, by.cell)
+                ranks <- lapply(bcca, rank, ties.method='average')
+                ## Reorder the days of qpqm on cell at a time
                 array(
                     mapply(
                         reorder,
-                        split(qpqm, rep(1:ndays, each=ncells)),
-                        split(ranks, 1:ndays)
-                    ),
-                    dim=c(nlon, nlat, ndays)
+                        split(qpqm, by.cell),
+                        ranks
+                    ), dim=c(nlon, nlat, ndays)
                 )
             }
         print(paste("Writing steps", i_0, "-", i_n, "/", nt, "to file", out.file))
