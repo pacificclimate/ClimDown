@@ -1,3 +1,8 @@
+## [0.3.0] - 2016-08-08
+### Bugfix release (alters results of computations)
+- Fixes an issue with QPQM reordering (ensures that reordering happens for each cell)
+- Adds two global options: check.neg.precip and check.units which can be used to enable/disable checks during data input
+
 ## [0.2.3] - 2016-07-15
 ### Bugfix release
 - Adds robustness to BCCA grid aggregation
