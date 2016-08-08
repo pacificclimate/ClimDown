@@ -3,8 +3,6 @@
     cd.options <- list(
         # Computation options
         max.GB=1,
-        mc.cores=4,
-        par.backend='multicore', # or 'MPI'
         # BCCA options
         trimmed.mean=0,
         delta.days=45,
