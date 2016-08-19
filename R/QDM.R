@@ -81,16 +81,21 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
             }) %dopar% {
                 bcca <- jitter(bcca, 0.01)
                 ndays <- length(bcca) / ncells
-                by.cell <- rep(1:ncells, each=ndays)
+                by.cell <- rep(1:ncells, times=ndays)
                 bcca <- split(bcca, by.cell)
                 ranks <- lapply(bcca, rank, ties.method='average')
                 ## Reorder the days of qpqm on cell at a time
                 array(
-                    mapply(
-                        reorder,
-                        split(qpqm, by.cell),
-                        ranks
-                    ), dim=c(nlon, nlat, ndays)
+                    unsplit(
+                        mapply(
+                            reorder,
+                            split(qpqm, by.cell),
+                            ranks,
+                            SIMPLIFY=F
+                        ),
+                        by.cell
+                    ),
+                    dim=c(nlon, nlat, ndays)
                 )
             }
         print(paste("Writing steps", i_0, "-", i_n, "/", nt, "to file", out.file))
