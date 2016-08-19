@@ -1,3 +1,7 @@
+## [0.4.0] - 2016-08-19
+### Bugfix release (alters results of computations)
+- Fixes an issue where QDM results were transposed during reording during certain cases
+
 ## [0.3.0] - 2016-08-08
 ### Bugfix release (alters results of computations)
 - Fixes an issue with QPQM reordering (ensures that reordering happens for each cell)
