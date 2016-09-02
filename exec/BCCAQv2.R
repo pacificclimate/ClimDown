@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+library(ClimDown)
+
 args <- commandArgs(TRUE)
 
 ## Help section
