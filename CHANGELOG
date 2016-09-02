@@ -1,3 +1,9 @@
+## [0.4.1] - 2016-09-02
+### Memory management release
+- Small changes ensuring that garbage collection happens at the end of
+  each chunked I/O loop. This helps contain the memory requirements on
+  large compute jobs.
+
 ## [0.4.0] - 2016-08-19
 ### Bugfix release (alters results of computations)
 - Fixes an issue where QDM results were transposed during reording during certain cases
