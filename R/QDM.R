@@ -58,13 +58,16 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         month.factor <- as.factor(format(date.sub, '%Y-%m'))
 
         print(paste("Applying analogues to timesteps", i_0, "-", i_n, "/", nt))
-        var.bcca <- mapply(
-            function(ti, wi) {
+        var.bcca <- foreach(
+            ti=analogues$indices[i_0:i_n],
+            wi=analogues$weights[i_0:i_n],
+            .export=c('obs.nc', 'varname'),
+            .final=function(x) {
+                array(unlist(x), dim=c(ncells, nt))
+            }
+            ) %dopar% {
                 apply.analogues.netcdf(ti, wi, obs.nc, varname)
-            },
-            analogues$indices[i_0:i_n],
-            analogues$weights[i_0:i_n]
-        )
+            }
         var.bcca <- positive_pr(var.bcca, varname)
         by.month <- rep(month.factor, each=ncells)
 
