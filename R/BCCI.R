@@ -54,8 +54,9 @@ apply.climatologies.nc <- function(nc, clima, monthly.factor, varname='tasmax', 
         x <- CD_ncvar_get(nc, varid=varname, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
         t <- monthly.factor[i['start']:i['stop']]
         x <- x %op% clima[,,t]
-
         ncvar_put(nc, varid=varname, vals=x, start=c(1, 1, i['start']), count=c(-1, -1, i['length']))
+        rm(x)
+        gc()
     }
     NULL
 }
@@ -138,6 +139,7 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
                                            gcm, output.nc, varname,
                                            nt.per.chunk=100) {
     nt <- dim(gcm)[3]
+    ncells <- length(gcm.lats) * length(gcm.lons)
 
     stopifnot(output.nc$var[[varname]]$varsize == c(length(obs.lons), length(obs.lats), dim(gcm)[3]))
     obs.grid <- xy.grid(obs.lats, obs.lons)
@@ -150,16 +152,23 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
     for (i in chunks) {
         i0 <- i['start']
         iN <- i['stop']
+        by.time <- rep(1:i['length'], each=ncells)
         print(paste("Interpolating timesteps", i0, "-", iN, "/", nt, "to file", output.nc$filename))
         rv <- array(
-            apply(gcm[,,i0:iN], 3, function(z) {
-                src$z <- z
-                interp.surface(src, dst)
-                #FIXME add the climatology? after this
-            }),
+            unsplit(
+                lapply(
+                    split(gcm[,,i0:iN], by.time),
+                    function(z) {
+                        src$z <- z
+                        interp.surface(src, dst)
+                    }
+                ), by.time
+            ),
             dim=c(length(obs.lons), length(obs.lats), i['length'])
         )
         ncvar_put(output.nc, varname, vals=rv, start=c(1, 1, i0), count=c(-1, -1, i['length']))
+        rm(rv)
+        gc()
     }
     nc_sync(output.nc)
     NULL
