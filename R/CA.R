@@ -1,5 +1,5 @@
 ##******************************************************************************
-# Bias Corrected Constructed Analogue (BCCA) downscaling algorithm
+# Constructed Analogue (CA) downscaling algorithm
 # Based loosely off of code by Alex Cannon <acannon@uvic.ca>
 # Rewritten by James Hiebert <hiebert@uvic.ca>
 
@@ -177,7 +177,7 @@ analogue.search.space <- function(times, today,
     which(in.days & in.years)
 }
 
-# FIXME: There's one remaining difference between pr and tas in the old BCCA code that
+# FIXME: There's one remaining difference between pr and tas in the old CA code that
 # needs to be explained and implemented
 # 116,11yc108,109
 # <     pr.gcm.i <- pr.gcm[i,na.mask]^expon
@@ -261,16 +261,16 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
     nc
 }
 
-#' @title High-level NetCDF I/O wrapper for the Bias Correction Constructed Analogues (BCCA) pipeline
+#' @title High-level NetCDF I/O wrapper for the Constructed Analogues (CA) pipeline
 #'
-#' @description BCCA starts by spatially aggregating high-resolution
+#' @description CA starts by spatially aggregating high-resolution
 #' gridded observations up to the scale of a GCM. Then it proceeds to
 #' bias correcting the GCM based on those observations. Finally, it
 #' conducts the search for temporal analogues (which is the most
 #' expensive part of the operation). This involves taking each
 #' timestep in the GCM and searching for the top 30 closest timesteps
 #' (for some function of "close") in the gridded observations. For
-#' each of the 30 closest "analogue" timesteps, BCCA records the
+#' each of the 30 closest "analogue" timesteps, CA records the
 #' integer number of the timestep and a weight for each of the
 #' analogues. These are all saved in output.file.
 #' 
@@ -280,7 +280,7 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 #' @return A list object with two values: 'indices' and 'weights', each of which is a vector with 30 items
 #'
 #' @export
-bcca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
+ca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
     is.pr <- varname == 'pr'
 
     # Read in GCM data

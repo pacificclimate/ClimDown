@@ -58,7 +58,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         month.factor <- as.factor(format(date.sub, '%Y-%m'))
 
         print(paste("Applying analogues to timesteps", i_0, "-", i_n, "/", nt))
-        var.bcca <- foreach(
+        var.ca <- foreach(
             ti=analogues$indices[i_0:i_n],
             wi=analogues$weights[i_0:i_n],
             .export=c('obs.nc', 'varname'),
@@ -68,11 +68,11 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
             ) %dopar% {
                 apply.analogues.netcdf(ti, wi, obs.nc, varname)
             }
-        var.bcca <- positive_pr(var.bcca, varname)
+        var.ca <- positive_pr(var.ca, varname)
         by.month <- rep(month.factor, each=ncells)
 
         dqm <- foreach(
-            bcca=split(var.bcca, by.month),
+            ca=split(var.ca, by.month),
             qpqm=split(var.qpqm, by.month),
             .multicombine=TRUE,
             .inorder=TRUE,
@@ -82,11 +82,11 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
                     dim=c(nlon, nlat, ni)
                 )
             }) %dopar% {
-                bcca <- jitter(bcca, 0.01)
-                ndays <- length(bcca) / ncells
+                ca <- jitter(ca, 0.01)
+                ndays <- length(ca) / ncells
                 by.cell <- rep(1:ncells, times=ndays)
-                bcca <- split(bcca, by.cell)
-                ranks <- lapply(bcca, rank, ties.method='average')
+                ca <- split(ca, by.cell)
+                ranks <- lapply(ca, rank, ties.method='average')
                 ## Reorder the days of qpqm on cell at a time
                 array(
                     unsplit(
@@ -104,7 +104,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         print(paste("Writing steps", i_0, "-", i_n, "/", nt, "to file", out.file))
         ncvar_put(nc=out.nc, varid=varname, vals=dqm,
                   start=c(1, 1, i_0), count=c(-1, -1, ni))
-        rm(var.qpqm, var.bcca, dqm)
+        rm(var.qpqm, var.ca, dqm)
         gc()
     }
 
