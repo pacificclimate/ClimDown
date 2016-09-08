@@ -7,15 +7,15 @@ args <- commandArgs(TRUE)
 ## Help section
 usage <- function() {
     cat('
-      Bias Correction Constructed Analogues Quantile version 2
+      Bias Correction Constructed Analogues Quantile
 
       Usage:
-      ./QCCAQv2.R [gcm_file] [obs_file] [output_file] [variable_name]
+      ./QCCAQ.R [gcm_file] [obs_file] [output_file] [variable_name]
 
       Arguments:
       gcm_file - Filename of GCM simulations in NetCDF format
       obs_file - Filename of high-res gridded historical observations
-      output_file - The file to create (or overwrite) with the final BCCAQv2 NetCDF output
+      output_file - The file to create (or overwrite) with the final BCCAQ NetCDF output
       varname - The name of the variable to downscale'
     )
 
@@ -31,4 +31,4 @@ if (length(args) != 4) {
 names(args) <- c('gcm.file', 'obs.file', 'output.file', 'varname')
 attach(args)
 
-bccaqv2.netcdf.wrapper(gcm.file, obs.file, output.file, varname)
+bccaq.netcdf.wrapper(gcm.file, obs.file, output.file, varname)
