@@ -72,8 +72,8 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         by.month <- rep(month.factor, each=ncells)
 
         dqm <- foreach(
-            bcca=split(var.bcca, rep(month.factor, each=ncells)),
-            qpqm=split(var.qpqm, rep(month.factor, each=ncells)),
+            bcca=split(var.bcca, by.month),
+            qpqm=split(var.qpqm, by.month),
             .multicombine=TRUE,
             .inorder=TRUE,
             .final=function(x) {
