@@ -104,7 +104,7 @@ qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname
         print(paste("Writing steps", i_0, "-", i_n, "/", nt, "to file", out.file))
         ncvar_put(nc=out.nc, varid=varname, vals=dqm,
                   start=c(1, 1, i_0), count=c(-1, -1, ni))
-        rm(dqm)
+        rm(var.qpqm, var.bcca, dqm)
         gc()
     }
 
