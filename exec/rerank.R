@@ -10,10 +10,10 @@ usage <- function() {
       Quantile Reranking
 
       Usage:
-      ./rerank.R [qpqm_file] [obs_file] [analogues_file] [output_file] [variable_name]
+      ./rerank.R [qdm_file] [obs_file] [analogues_file] [output_file] [variable_name]
 
       Arguments:
-      qpqm_file - The output file from the QPQM script
+      qdm_file - The output file from the QDM script
       obs_file - Filename of high-res gridded historical observations
       analogues_file - The output file from the BCCA script
       output_file - The file to create (or overwrite) with the ...
@@ -31,7 +31,7 @@ if (length(args) != 5) {
     quit(status=1)
 }
 
-names(args) <- c('qpqm.file', 'obs.file', 'analogues.file', 'output.file', 'varid')
+names(args) <- c('qdm.file', 'obs.file', 'analogues.file', 'output.file', 'varid')
 attach(args)
 
 load(analogues.file)

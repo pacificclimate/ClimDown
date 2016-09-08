@@ -6,7 +6,7 @@
 #'
 #' At present, the package only exports high-level wrapper function
 #' that perform each of three downscaling steps: CI, CA, and
-#' QPQM. Each wrapper simply takes four arguments: GCM file, gridded
+#' QDM. Each wrapper simply takes four arguments: GCM file, gridded
 #' observation file, output file, and variable name.
 #'
 #' The package also provides three wrapper scripts that allow the user

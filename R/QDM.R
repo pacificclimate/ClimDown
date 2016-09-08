@@ -1,9 +1,9 @@
 ################################################################################
-# Quantile perturbation quantile mapping for bias correction of ratio and
+# Quantile Delta Mapping (QDM) for bias correction of ratio and
 # interval data. Alex Cannon (acannon@uvic.ca)
 ################################################################################
 
-QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
+QDM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
                  n.tau=NULL)
 {
     # Quantile perturbation quantile mapping bias correction:
@@ -40,7 +40,7 @@ QPQM <- function(o.c, m.c, m.p, ratio=TRUE, trace=0.05, jitter.factor=0.01,
     quant.o.c <- quantile(o.c, tau, type=6, na.rm=TRUE)
     quant.m.c <- quantile(m.c, tau, type=6, na.rm=TRUE)
     quant.m.p <- quantile(m.p, tau, type=6, na.rm=TRUE)
-    # Apply QPQM bias correction
+    # Apply QDM bias correction
     tau.m.p <- approx(quant.m.p, tau, m.p, rule=2)$y    
     if(ratio){
         delta.m <- m.p/approx(tau, quant.m.c, tau.m.p, rule=2)$y
@@ -121,12 +121,12 @@ mk.factor.set <- function(o.c.dates, m.c.dates, m.p.dates,
     }
 }
 
-tQPQM <- function(o.c, m.c, m.p,
+tQDM <- function(o.c, m.c, m.p,
                   o.c.factor, m.c.factor, m.p.factor,
                   n.window=30, ratio=TRUE, trace=0.05,
                   jitter.factor=0.01, n.tau=NULL)
 {
-    # Apply QPQM bias correction over 3-month moving windows (seasonal=TRUE)
+    # Apply QDM bias correction over 3-month moving windows (seasonal=TRUE)
     # or single months, both over (sliding) blocks of n.window years or
     # multi-year chunks of years
     # o = vector of observed values; m = vector of modelled values
@@ -150,11 +150,11 @@ tQPQM <- function(o.c, m.c, m.p,
     mc.by.month <- split(m.c, m.c.factor)
     mhat.list <- mapply(
                    function(mp.subset, month) {
-                     qpqm <- QPQM(o.c=oc.by.month[[month]], m.c=mc.by.month[[month]],
+                     qdm <- QDM(o.c=oc.by.month[[month]], m.c=mc.by.month[[month]],
                                   m.p=mp.subset, ratio=ratio,
                                   trace=trace, jitter.factor=jitter.factor,
                                   n.tau=n.tau)
-                     qpqm$mhat.p
+                     qdm$mhat.p
                    },
                    mp.subset=sections,
                    months
@@ -163,9 +163,9 @@ tQPQM <- function(o.c, m.c, m.p,
     unsplit(mhat.list, m.p.factor)
 }
 
-#' @title High-level wrapper for Quantile perturbation quantile mapping (QPQM)
+#' @title High-level wrapper for Quantile Delta Mapping (QDM)
 #'
-#' @description This function performs the QPQM algorithm on a
+#' @description This function performs the QDM algorithm on a
 #' cell-by-cell basis for each cell in the spatial domain of the
 #' inputted high-res gridded observations. It uses the gridded
 #' observations plus the GCM-based output of CI as input to the
@@ -179,7 +179,7 @@ tQPQM <- function(o.c, m.c, m.p,
 #' @return NULL
 #'
 #' @export
-qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
+qdm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
     ptm <- proc.time()
 
     cstart <- getOption('calibration.start')
@@ -246,18 +246,18 @@ qpqm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') 
         ncells <- xn*yn
 
         # Compute loop. Cell major. Do something to a timeseries for each cell.
-        print(paste("Computing QPQM on", ncells, "cells"))
+        print(paste("Computing QDM on", ncells, "cells"))
         m.p.chunk <- foreach(o.c=split(o.c.chunk, 1:ncells),
                              m.p=split(m.p.chunk, 1:ncells),
                              .combine=c, .multicombine=TRUE, .inorder=TRUE,
-                             .export=c('na.gcm', 'tQPQM', 'varname', 'gcm.obs.subset.i', 'time.factors', 'QPQM')) %dopar% {
+                             .export=c('na.gcm', 'tQDM', 'varname', 'gcm.obs.subset.i', 'time.factors', 'QDM')) %dopar% {
 
           if(all(is.na(o.c), is.na(m.p))) {
             na.gcm
           } else {
             # consider the modeled values during the observed period separately
             # m.c <- m.p[gcm.obs.subset.i]
-            tQPQM(o.c=o.c, m.c=m.p[gcm.obs.subset.i], m.p=m.p,
+            tQDM(o.c=o.c, m.c=m.p[gcm.obs.subset.i], m.p=m.p,
                   time.factors$oc,
                   time.factors$mc,
                   time.factors$mp,
