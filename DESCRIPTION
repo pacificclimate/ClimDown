@@ -1,6 +1,6 @@
 Package: ClimDown
-Version: 0.4.1
-Date: 2016-09-02
+Version: 0.4.2
+Date: 2016-09-08
 Title: PCIC's Daily Climate Downscaling Library
 Authors@R: c(person("Alex Cannon", role = "aut", email = "acannon@uvic.ca"),
 	     person("James Hiebert", role = c("aut", "cre"), email = "hiebert@uvic.ca"),

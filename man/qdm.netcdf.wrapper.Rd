@@ -2,23 +2,28 @@
 % Please edit documentation in R/QDM.R
 \name{qdm.netcdf.wrapper}
 \alias{qdm.netcdf.wrapper}
-\title{High-level NetCDF wrapper for Quantile Delta Mapping (QDM)}
+\title{High-level wrapper for Quantile Delta Mapping (QDM)}
 \usage{
-qdm.netcdf.wrapper(qpqm.file, obs.file, analogues, out.file,
-  varname = "tasmax")
+qdm.netcdf.wrapper(obs.file, gcm.file, out.file, varname = "tasmax")
 }
 \arguments{
-\item{qpqm.file}{The output file from the QPQM script}
-
 \item{obs.file}{Filename of high-res gridded historical observations}
 
-\item{analogues}{Temporal analogues... describe this more}
+\item{gcm.file}{Filename of GCM simulations interpolated to the obs.file grid}
 
-\item{out.file}{The file to create (or overwrite) with the final NetCDF output}
+\item{out.file}{Filename to create (or overwrite) with the bias corrected outputs}
 
 \item{varname}{Name of the NetCDF variable to downscale (e.g. 'tasmax')}
 }
 \description{
-All files (save for the analogues_file) should have the same spatial domain.
+This function performs the QDM algorithm on a
+cell-by-cell basis for each cell in the spatial domain of the
+inputted high-res gridded observations. It uses the gridded
+observations plus the GCM-based output of CI as input to the
+algorithm and then performs a quantile perturbation/quantile
+mapping bias correction. The output is written out to out.file.
+}
+\references{
+Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias Correction of GCM Precipitation by Quantile Mapping: How Well Do Methods Preserve Changes in Quantiles and Extremes?. Journal of Climate, 28(17), 6938-6959. doi: 10.1175/JCLI-D-14-00754.1
 }
 

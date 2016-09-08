@@ -12,15 +12,18 @@ spatial resolution.
 }
 \details{
 At present, the package only exports high-level wrapper function
-that perform each of three downscaling steps: BCCI, BCCA, and
-QPQM. Each wrapper simply takes four arguments: GCM file, gridded
-observation file, output file, and variable name.
+that perform each of three downscaling steps: CI, CA, and QDM, as
+well as one wrapper that runs the entire pipeline: BCCAQ. In
+general, each wrapper simply takes four arguments: GCM file,
+gridded observation file, output file, and variable name. However,
+see the specific function documentation for specifics.
 
-The package also provides three wrapper scripts that allow the user
-to run each step from the command line with Rscript.
+The package also provides five wrapper scripts that allow the user
+to run each step from the command line (plus the whole pipeline)
+with Rscript.
 }
 \references{
-Alex J. Cannon, Stephen R. Sobie, and Trevor Q. Murdock, 2015: Bias Correction of GCM Precipitation by Quantile Mapping: How Well Do Methods Preserve Changes in Quantiles and Extremes?. J. Climate, 28, 6938–6959.
+Werner, A. T., & Cannon, A. J. (2016). Hydrologic extremes  - an intercomparison of multiple gridded statistical downscaling methods. Hydrology and Earth System Sciences, 20(4), 1483-1508. doi: 10.5194/hess-20-1483-2016
 }
 \keyword{climate}
 \keyword{downscaling}

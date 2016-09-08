@@ -1,3 +1,10 @@
+## [0.4.2] - 2016-09-08
+### Documentation and naming release
+- Adds documentation for global options
+- Adds documentation for parallelization usage
+- Adds academic references to all wrapper functions
+- Renames functions to correspond to scientific literature
+
 ## [0.4.1] - 2016-09-02
 ### Memory management release
 - Small changes ensuring that garbage collection happens at the end of
