@@ -11,11 +11,11 @@
 bccaqv2.netcdf.wrapper <- function(gcm.file, obs.file, out.file, varname='tasmax') {
     ptm <- proc.time()
 
-    bcci.file <- tempfile(fileext='.nc')
-    bcci.netcdf.wrapper(gcm.file, obs.file, bcci.file, varname)
+    ci.file <- tempfile(fileext='.nc')
+    ci.netcdf.wrapper(gcm.file, obs.file, ci.file, varname)
     qpqm.file <- tempfile(fileext='.nc')
-    qpqm.netcdf.wrapper(obs.file, bcci.file, qpqm.file, varname)
-    unlink(bcci.file)
+    qpqm.netcdf.wrapper(obs.file, ci.file, qpqm.file, varname)
+    unlink(ci.file)
     analogues <- bcca.netcdf.wrapper(gcm.file, obs.file, varname)
     qdm.netcdf.wrapper(qpqm.file, obs.file, analogues, out.file, varname)
     unlink(qpqm.file)

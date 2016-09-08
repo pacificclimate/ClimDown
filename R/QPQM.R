@@ -168,7 +168,7 @@ tQPQM <- function(o.c, m.c, m.p,
 #' @description This function performs the QPQM algorithm on a
 #' cell-by-cell basis for each cell in the spatial domain of the
 #' inputted high-res gridded observations. It uses the gridded
-#' observations plus the GCM-based output of BCCI as input to the
+#' observations plus the GCM-based output of CI as input to the
 #' algorithm and then performs a quantile perturbation/quantile
 #' mapping bias correction. The output is written out to out.file.
 #' 

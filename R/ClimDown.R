@@ -5,7 +5,7 @@
 #' spatial resolution.
 #'
 #' At present, the package only exports high-level wrapper function
-#' that perform each of three downscaling steps: BCCI, BCCA, and
+#' that perform each of three downscaling steps: CI, BCCA, and
 #' QPQM. Each wrapper simply takes four arguments: GCM file, gridded
 #' observation file, output file, and variable name.
 #'

@@ -1,5 +1,5 @@
 ##******************************************************************************
-# Bias Corrected Climate Imprint (BCCI) downscaling algorithm
+# Climate Imprint (CI) downscaling algorithm
 # Conceptually based (very) loosely off of code by Alex Cannon <acannon@uvic.ca>
 # Rewritten by James Hiebert <hiebert@uvic.ca>
 
@@ -197,9 +197,9 @@ nc_gety <- function(nc) {
     ncvar_get(nc, 'lat')
 }
 
-#' @title High-level NetCDF wrapper for Bias Correction Climate Imprint (BCCI)
+#' @title High-level NetCDF wrapper for Climate Imprint (CI)
 #'
-#' @description BCCI performs several steps. For the GCM input it
+#' @description CI performs several steps. For the GCM input it
 #' calculates daily climate anomalies from a given calibration period
 #' (default 1951-2005). These daily GCM anomalies are interpolated to
 #' the high-resolution observational grid. These interpolated daily
@@ -215,7 +215,7 @@ nc_gety <- function(nc) {
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
 #' @export
-bcci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
+ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
 
     nc.gcm <- nc_open(gcm.file)
     gcm <- CD_ncvar_get(nc.gcm, varname)
