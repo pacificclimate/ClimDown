@@ -7,10 +7,10 @@ args <- commandArgs(TRUE)
 ## Help section
 usage <- function() {
     cat('
-      Quantile Delta Mapping???
+      Quantile Reranking
 
       Usage:
-      ./QDM.R [qpqm_file] [obs_file] [analogues_file] [output_file] [variable_name]
+      ./rerank.R [qpqm_file] [obs_file] [analogues_file] [output_file] [variable_name]
 
       Arguments:
       qpqm_file - The output file from the QPQM script
@@ -35,4 +35,4 @@ names(args) <- c('qpqm.file', 'obs.file', 'analogues.file', 'output.file', 'vari
 attach(args)
 
 load(analogues.file)
-qdm.netcdf.wrapper(gcm.file, bcci.file, obs.file, analogues, output.file, varid)
+rerank.netcdf.wrapper(gcm.file, bcci.file, obs.file, analogues, output.file, varid)

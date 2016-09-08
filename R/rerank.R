@@ -3,7 +3,7 @@ reorder <- function(x,ix) {
   return(rx)
 }
 
-#' @title High-level NetCDF wrapper for Quantile Delta Mapping (QDM)
+#' @title High-level NetCDF wrapper for Quantile Reranking
 #'
 #' @description All files (save for the analogues_file) should have the same spatial domain.
 #'
@@ -14,7 +14,7 @@ reorder <- function(x,ix) {
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
 #' @export
-qdm.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname='tasmax') {
+rerank.netcdf.wrapper <- function(qpqm.file, obs.file, analogues, out.file, varname='tasmax') {
     ptm <- proc.time()
 
     qpqm.nc <- nc_open(qpqm.file)
