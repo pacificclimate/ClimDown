@@ -3,7 +3,7 @@
     cd.options <- list(
         # Computation options
         max.GB=1,
-        # BCCA options
+        # CA options
         trimmed.mean=0,
         delta.days=45,
         n.analogues=30,

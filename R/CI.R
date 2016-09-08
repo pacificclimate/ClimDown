@@ -174,7 +174,7 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
     NULL
 }
 
-# FIXME: this name is duplicated from BCCA.R
+# FIXME: this name is duplicated from CA.R
 mk.output.ncdf <- function(file.name, varname, gcm.template, obs.template, global.attrs=list()) {
     dims <- c(obs.template$var[[varname]]$dim[1:2], gcm.template$var[[varname]]$dim[3])
     var <- ncvar_def(varname, getOption('target.units')[varname], dims)
