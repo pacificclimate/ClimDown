@@ -11,7 +11,7 @@
         calibration.end=as.POSIXct('2005-12-31', tz='GMT'),
         tol=0.1,
         expon=0.5,
-        # QPQM options
+        # QDM options
         multiyear=TRUE,
         expand.multiyear=TRUE,
         multiyear.window.length=30,

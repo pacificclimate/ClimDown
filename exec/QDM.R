@@ -7,10 +7,10 @@ args <- commandArgs(TRUE)
 ## Help section
 usage <- function() {
     cat('
-      Quantile perturbation quantile mapping
+      Quantile Delta Mapping
 
       Usage:
-      ./QPQM.R [obs_file] [gcm_file] [output_file] [variable_name]
+      ./QDM.R [obs_file] [gcm_file] [output_file] [variable_name]
 
       Arguments:
       obs_file - Gridded historical observations
@@ -33,4 +33,4 @@ if (length(args) != 4) {
 names(args) <- c('gcm.file', 'obs.file', 'output.file', 'varid')
 attach(args)
 
-qpqm.netcdf.wrapper(gcm.file, obs.file, output.file, varid)
+qdm.netcdf.wrapper(gcm.file, obs.file, output.file, varid)
