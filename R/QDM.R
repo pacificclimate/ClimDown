@@ -178,6 +178,7 @@ tQDM <- function(o.c, m.c, m.p,
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #' @return NULL
 #'
+#' @references Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias Correction of GCM Precipitation by Quantile Mapping: How Well Do Methods Preserve Changes in Quantiles and Extremes?. Journal of Climate, 28(17), 6938-6959. doi: 10.1175/JCLI-D-14-00754.1
 #' @export
 qdm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {
     ptm <- proc.time()

@@ -13,6 +13,9 @@ reorder <- function(x,ix) {
 #' @param out.file The file to create (or overwrite) with the final NetCDF output
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
+#' @references Schefzik, R., Thorarinsdottir, T. L., & Gneiting, T. (2013). Uncertainty quantification in complex simulation models using ensemble copula coupling. Statistical Science, 28(4), 616-640.
+#'
+#' Wilks, D. S. (2015). Multivariate ensemble Model Output Statistics using empirical copulas. Quarterly Journal of the Royal Meteorological Society, 141(688), 945-952.
 #' @export
 rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varname='tasmax') {
     ptm <- proc.time()

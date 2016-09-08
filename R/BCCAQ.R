@@ -7,6 +7,7 @@
 #' @param out.file The file to create (or overwrite) with the final BCCAQ NetCDF output
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
+#' @references Werner, A. T., & Cannon, A. J. (2016). Hydrologic extremes  - an intercomparison of multiple gridded statistical downscaling methods. Hydrology and Earth System Sciences, 20(4), 1483-1508. doi: 10.5194/hess-20-1483-2016
 #' @export
 bccaq.netcdf.wrapper <- function(gcm.file, obs.file, out.file, varname='tasmax') {
     ptm <- proc.time()
