@@ -4,3 +4,5 @@
 README.rst
 CONTRIBUTING.rst
 doc/
+.travis.yml
+devtestsuite.R
