@@ -26,7 +26,7 @@ rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varna
 
     cat('Creating output file', out.file, '\n')
     dims <- qdm.nc$var[[varname]]$dim
-    vars <- ncvar_def(varname, getOption('target.units')[varname], dims)
+    vars <- ncvar_def(varname, getOption('target.units')[varname], dims, NA)
     out.nc <- nc_create(out.file, vars)
 
     nlat <- qdm.nc$dim$lat$len
@@ -61,16 +61,13 @@ rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varna
         month.factor <- as.factor(format(date.sub, '%Y-%m'))
 
         print(paste("Applying analogues to timesteps", i_0, "-", i_n, "/", nt))
-        var.ca <- foreach(
-            ti=analogues$indices[i_0:i_n],
-            wi=analogues$weights[i_0:i_n],
-            .export=c('obs.nc', 'varname'),
-            .final=function(x) {
-                array(unlist(x), dim=c(ncells, nt))
-            }
-            ) %dopar% {
+        var.ca <- mapply(
+            function(ti, wi) {
                 apply.analogues.netcdf(ti, wi, obs.nc, varname)
-            }
+            },
+            analogues$indices[i_0:i_n],
+            analogues$weights[i_0:i_n]
+        )
         var.ca <- positive_pr(var.ca, varname)
         by.month <- rep(month.factor, each=ncells)
 
