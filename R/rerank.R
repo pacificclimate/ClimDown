@@ -26,7 +26,7 @@ rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varna
 
     cat('Creating output file', out.file, '\n')
     dims <- qdm.nc$var[[varname]]$dim
-    vars <- ncvar_def(varname, getOption('target.units')[varname], dims)
+    vars <- ncvar_def(varname, getOption('target.units')[varname], dims, NA)
     out.nc <- nc_create(out.file, vars)
 
     nlat <- qdm.nc$dim$lat$len
