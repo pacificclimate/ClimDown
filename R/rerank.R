@@ -68,7 +68,7 @@ rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varna
             analogues$indices[i_0:i_n],
             analogues$weights[i_0:i_n]
         )
-        var.ca <- positive_pr(var.bcca, varname)
+        var.ca <- positive_pr(var.ca, varname)
         by.month <- rep(month.factor, each=ncells)
 
         dqm <- foreach(
