@@ -3,6 +3,14 @@
 # Conceptually based (very) loosely off of code by Alex Cannon <acannon@uvic.ca>
 # Rewritten by James Hiebert <hiebert@uvic.ca>
 
+is.range.subset <- function(inner, outer) {
+    if (any(is.na(c(inner, outer)))) {
+        FALSE
+    } else {
+        outer[1] < inner[1] & outer[2] > inner[2]
+    }
+}
+
 # O(n) time, O(n) space
 monthly.climatologies <- function(gcm, gcm.times) {
     monthly.factor <- factor(format(gcm.times, '%m'))
@@ -143,6 +151,11 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
 
     stopifnot(output.nc$var[[varname]]$varsize == c(length(obs.lons), length(obs.lats), dim(gcm)[3]))
     obs.grid <- xy.grid(obs.lats, obs.lons)
+
+    if (!(is.range.subset(range(obs.lons), range(gcm.lons)) &
+          is.range.subset(range(obs.lats), range(gcm.lats)))) {
+        stop("Observation domain must be a proper spatial subset of the GCM domain (but it's not). Please check your input files.")
+    }
 
     src <- list(x=gcm.lons, y=gcm.lats)
     dst <- matrix(c(obs.grid$x, obs.grid$y), ncol=2)
