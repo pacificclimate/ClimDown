@@ -165,18 +165,12 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
     for (i in chunks) {
         i0 <- i['start']
         iN <- i['stop']
-        by.time <- rep(1:i['length'], each=ncells)
         print(paste("Interpolating timesteps", i0, "-", iN, "/", nt, "to file", output.nc$filename))
         rv <- array(
-            unsplit(
-                lapply(
-                    split(gcm[,,i0:iN], by.time),
-                    function(z) {
-                        src$z <- z
-                        interp.surface(src, dst)
-                    }
-                ), by.time
-            ),
+            apply(gcm[,,i0:iN], 3, function(z) {
+                src$z <- z
+                interp.surface(src, dst)
+            }),
             dim=c(length(obs.lons), length(obs.lats), i['length'])
         )
         ncvar_put(output.nc, varname, vals=rv, start=c(1, 1, i0), count=c(-1, -1, i['length']))
