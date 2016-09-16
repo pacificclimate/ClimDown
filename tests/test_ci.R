@@ -36,7 +36,7 @@ test.ci.netcdf.wrapper <- function() {
 }
 
 test.is.range.subset <- function() {
-    f <- is.range.subset
+    f <- ClimDown:::is.range.subset
     checkTrue(f(c(1, 2), c(0, 3)))
     checkEquals(FALSE, f(c(1, 2), c(1, 3)))
     checkEquals(FALSE, f(c(1, 2), c(0, 2)))
