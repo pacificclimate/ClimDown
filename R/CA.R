@@ -221,7 +221,7 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
     # Then find the 30 lowest differences
     # returns the indices for the n closest analogues
     # of this particular GCM timestep
-    analogue.indices <- quickest.select(diffs, n.analogues)
+    analogue.indices <- introselect.k.lowest(diffs, n.analogues)
 
     # Constructed analogue weights
     na.mask <- !is.na(agged.obs[,,1])

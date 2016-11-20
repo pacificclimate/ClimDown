@@ -13,7 +13,8 @@ Imports:
     fields,
     foreach,
     seas,
-    abind
+    abind,
+    Rcpp
 Suggests:
     RUnit
 SystemRequirements: libnetcdf (>= 4.4.0)
