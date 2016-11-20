@@ -17,6 +17,7 @@ Imports:
     Rcpp
 Suggests:
     RUnit
+LinkingTo: Rcpp
 SystemRequirements: libnetcdf (>= 4.4.0)
 Encoding: UTF-8
 Description: PCIC's suite of routines for downscaling coarse
