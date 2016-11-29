@@ -1,3 +1,7 @@
+## [1.0.0] - 2016-11-29
+## First stable release
+- This is just a "rebranding" of 0.7.0. Zero changes to the code.
+
 ## [0.7.0] - 2016-09-22
 ## Bugfix release
 - Fixes regression bug introduced by version 0.4.1
