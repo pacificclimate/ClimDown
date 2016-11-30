@@ -3,3 +3,5 @@ README.rst
 CONTRIBUTING.rst
 .travis.yml
 devtestsuite.R
+.py
+R/BCSD/
