@@ -1,13 +1,16 @@
+## [1.0.1] - 2016-11-30
+### Fixes package metadata for CRAN
+
 ## [1.0.0] - 2016-11-29
-## First stable release
+### First stable release
 - This is just a "rebranding" of 0.7.0. Zero changes to the code.
 
 ## [0.7.0] - 2016-09-22
-## Bugfix release
+### Bugfix release
 - Fixes regression bug introduced by version 0.4.1
 
 ## [0.6.0] - 2016-09-16
-## Bugfix release
+### Bugfix release
 - Adds spatial domain checking to CI interpolation
 
 ## [0.5.0] - 2016-09-13
