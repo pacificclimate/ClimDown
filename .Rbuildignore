@@ -6,3 +6,5 @@ CONTRIBUTING.rst
 doc/
 .travis.yml
 devtestsuite.R
+.py
+R/BCSD/
