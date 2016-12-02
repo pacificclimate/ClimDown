@@ -163,6 +163,10 @@ tQDM <- function(o.c, m.c, m.p,
     unsplit(mhat.list, m.p.factor)
 }
 
+## Package check tools can't detect foreach's use of non-standard evaluation
+## Ensure that they skip these variable names
+utils::globalVariables(c('o.c', 'm.p'))
+
 #' @title High-level wrapper for Quantile Delta Mapping (QDM)
 #'
 #' @description This function performs the QDM algorithm on a
