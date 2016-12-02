@@ -1,3 +1,6 @@
+## [1.0.2] - 2016-12-01
+### Ensure that package check tools ignore NSE vars
+
 ## [1.0.1] - 2016-11-30
 ### Fixes package metadata for CRAN
 
