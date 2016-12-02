@@ -234,6 +234,10 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
     list(analogues=analogue.indices, weights=weights)
 }
 
+## Package check tools can't detect foreach's use of non-standard evaluation
+## Ensure that they skip these variable names
+utils::globalVariables('i')
+
 # gcm: a 3d vector (lat x lon x time) representing a GCM simulation
 # agged.obs: a 3d vector (lat x lon x time) representing the aggregated observations
 # gcm.times: PCICt vector of time values for the GCM

@@ -3,6 +3,10 @@ reorder <- function(x,ix) {
   return(rx)
 }
 
+## Package check tools can't detect foreach's use of non-standard evaluation
+## Ensure that they skip these variable names
+utils::globalVariables(c('ca', 'qdm'))
+
 #' @title High-level NetCDF wrapper for Quantile Reranking
 #'
 #' @description All files (save for the analogues_file) should have the same spatial domain.
