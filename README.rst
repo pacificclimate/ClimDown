@@ -26,7 +26,7 @@ pros and cons of each downscaling method.
 
 
 Installation
-------------
+============
 
 You can install the latest `ClimDown release from CRAN`_ using the R
 interpreter: ``> install.packages('climdex.pcic')``
@@ -35,9 +35,27 @@ interpreter: ``> install.packages('climdex.pcic')``
 
 If you are interested in a development version or a specific release
 of ClimDown, you can use the `devtools` package as an installation
-alternative.
+alternative.::
 
-     > install.packages('devtools')
-     > devtools::install_github("pacificclimate/ClimDown", ref="release")
-     # Or
-     > devtools::install_github("pacificclimate/ClimDown", ref="1.0.1")
+    > install.packages('devtools')
+    > devtools::install_github("pacificclimate/ClimDown", ref="release")
+    # Or
+    > devtools::install_github("pacificclimate/ClimDown", ref="1.0.1")
+
+System dependencies
+-------------------
+
+ClimDown reads all of its input and produces its output in `NetCDF
+format`_ and manages numeric units using the `UDUNITS2 library`_. The
+NetCDF and udunits2 libraries are system dependency of the
+package. Ensure that the following packages are installed under
+Debian/Ubuntu Linux systems: libnetcdf-dev, netcdf-bin, and
+libudunits2-dev. For other systems, follow the installation `NetCDF
+install instructions`_ and `UDUNITS2 install instructions`_ provided
+by `Unidata`_.
+
+.. _NetCDF format: https://www.unidata.ucar.edu/software/netcdf/docs/netcdf_introduction.html
+.. _UDUNITS2 library: https://www.unidata.ucar.edu/software/udunits/udunits-current/doc/udunits/udunits2.html
+.. _NetCDF install instructions: https://www.unidata.ucar.edu/software/netcdf/docs/getting_and_building_netcdf.html
+.. _UDUNITS2 install instructions: https://www.unidata.ucar.edu/software/udunits/udunits-current/doc/udunits/udunits2.html#Installation
+.. _Unidata: https://www.unidata.ucar.edu/
