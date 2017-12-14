@@ -26,6 +26,49 @@ references to the corresponding scientific literature.
   .. _Pacific Climate Impacts Consortium: https://pacificclimate.org/
   .. _Environment and Climate Change Canada: http://ec.gc.ca/
 
+Climate Downscaling: What and Why?
+==================================
+
+Changes in global climate have widespread impacts on the environment,
+economic activity, and human health, especially in high latitudes
+where warming is proceeding more rapidly and where ecosystems and
+traditional lifestyles are particularly sensitive to the impacts of
+warming.
+
+Planning for adapting to climate change requires scientifically sound
+information about the future climate. Global climate models (GCMs)
+simulate future climate under different emission scenarios. However,
+GCMs simulate average conditions over large grid cells--typically on
+the order of 10,000 square kilometers or more per cell--which is often
+too coarse a resolution for regional and local applications. The use
+of original GCM data is not always the best option to provide
+adaptation-relevant information at the local scale.
+
+Bias in model simulated local climate is of concern for many
+applications. For example, compared with observations, the median
+temperature simulated by GCMs from the Coupled Model Intercomparison
+Project Phase 5 (CMIP5) shows biases relative to Climate Research Unit
+high-resolution gridded dataset (`CRU TS3.10`_) ranging from -3° C to
+1.5° C for seasonal and annual mean temperatures in 26 global land
+areas (`Flato et al. 2013`_).  Precipitation simulated by CMIP5 models
+is also biased relative to observations (`Flato et al. 2013`_). These
+biases hinder the direct application of model simulated future climate
+for impacts modelling and adaptation planning since climate impacts
+are often related to certain physical or biophysical thresholds. As a
+result, adaptation planning often uses model simulated future climate
+information that has incorporated some sort of downscaling and bias
+correction. Additionally, climate information is more useable and is
+less prone to misinterpretation when presented in a manner specific to
+the local community and/or impacts most relevant to a particular
+sector. High-resolution future projections of impact-relevant climate
+indices can be particularly useful in this regard.
+
+ClimDown has been used to produce such bias corrected, downscaled GCMs
+for current and future climates, and could be used to do so for
+anywhere else in the world.
+
+.. _Flato et al. 2013: http://www.ipcc.ch/pdf/assessment-report/ar5/wg1/WG1AR5_Chapter09_FINAL.pdf
+.. _CRU TS3.10: http://dx.doi.org/10.1002/joc.3711
 
 Installation
 ============
