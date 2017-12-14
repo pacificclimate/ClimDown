@@ -5,11 +5,12 @@
 #' spatial resolution.
 #'
 #' At present, the package only exports high-level wrapper function
-#' that perform each of three downscaling steps: CI, CA, and QDM, as
-#' well as one wrapper that runs the entire pipeline: BCCAQ. In
-#' general, each wrapper simply takes four arguments: GCM file,
-#' gridded observation file, output file, and variable name. However,
-#' see the specific function documentation for specifics.
+#' that perform each of three downscaling steps: CI, CA, QDM, and
+#' rerank as well as one wrapper that runs the entire pipeline:
+#' BCCAQ. In general, each wrapper simply takes four arguments: GCM
+#' file, gridded observation file, output file, and variable
+#' name. However, see the specific function documentation for
+#' specifics.
 #'
 #' The package also provides five wrapper scripts that allow the user
 #' to run each step from the command line (plus the whole pipeline)

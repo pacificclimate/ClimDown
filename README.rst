@@ -10,15 +10,17 @@ The package provides routines for statistical downscaling of coarse
 scale global climate model (GCM) output to a fine spatial resolution.
 
 PCIC's suite of routines include several different (yet related)
-downscaling techniques:
+downscaling techniques. The entire process is named Bias
+Correction/Constructed Analogues with Quantile mapping reordering
+(BCCAQ) and is composed of the following steps.
 
-* Bias-Corrected Spatial Downscaling (BCSD)
-* Bias-Correction Constructed Analogues (BCCA)
-* Bias Correction/Climate Imprint (BCCI)
-* Bias Correction/Constructed Analogues with Quantile mapping reordering (BCCAQ).
+* Constructed Analogues (CA)
+* Climate Imprint (CI)
+* Quantile Delta Mapping (QDM)
+* Rerank
 
-See the corresponding scientific literature for more details on the
-pros and cons of each downscaling method.
+See refer to the package documentation for details on each step and
+references to the corresponding scientific literature.
 
   .. _R statistical programming language: http://www.r-project.org/
   .. _Pacific Climate Impacts Consortium: https://pacificclimate.org/
