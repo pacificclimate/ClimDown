@@ -59,3 +59,42 @@ by `Unidata`_.
 .. _NetCDF install instructions: https://www.unidata.ucar.edu/software/netcdf/docs/getting_and_building_netcdf.html
 .. _UDUNITS2 install instructions: https://www.unidata.ucar.edu/software/udunits/udunits-current/doc/udunits/udunits2.html#Installation
 .. _Unidata: https://www.unidata.ucar.edu/
+
+Necessary Resources, Performance, and Platform
+==============================================
+
+The BCCAQ algorithm implemented by ClimDown is a complex, multi-stage
+operation, and as such performance will vary widely depending on the
+size of the input, the degree of parallelism selected by the user, and
+the performance characteristics of user's system (CPU speed, available
+RAM, I/O speed).
+
+We have `previously written`_ about some of the `complexities involved
+in downscaling performance`_, but it remains an area of active study.
+
+Consider our experience as a matter of anecdote. We typically run
+ClimDown for downscaling 150 year, daily GCM simulations to a
+Canada-wide ANUSPLIN grid (approximately 10km resolution, 1068 by 510
+cells). On our Linux systems, such runs can take up to 7 days to
+complete. However each of the different downscaling steps has
+different opportunities for parallelism and different performance
+characteristics. Typical of our runs is something like this:
+
+* CI: 1 core, 10 GB RAM, Run time ~ 7 hours
+* CA: 8 cores, 10 GB RAM, Run time ~ 2 hours
+* QDM: 1 core, 36 GB RAM, Run time ~ 1.5 days
+* rerank: 4 cores, 8 GB RAM, Run time ~ 4 days
+
+In general, this downscaling technique is very expensive for large
+spatiotemporal domains. The more you can limit your domain, the faster
+your runtime will be. For small domains, it may be possible to run
+ClimDown on a typical workstation, but in general we do all of our
+production runs on rack-mounted supercomputers.
+
+Though Windows binaries for ClimDown are available `from CRAN`_, no
+effort has been made to optimize this package for Windows and your
+mileage may vary.
+
+.. _previously written: http://james.hiebert.name/blog/work/2016/04/26/BCCA/
+.. _complexities involved in downscaling performance: https://github.com/pacificclimate/ClimDown/blob/doc/doc/report.md#rewriting-numerous-algorithms
+.. _from CRAN: https://cran.r-project.org/web/packages/ClimDown/index.html
