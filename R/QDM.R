@@ -182,6 +182,20 @@ utils::globalVariables(c('o.c', 'm.p'))
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #' @return NULL
 #'
+#' @examples
+#' \dontrun{
+#' ci.file <<- tempfile(fileext='.nc')
+#' ClimDown::ci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', ci.file, 'tasmax')
+#' out.nc <- tempfile(fileext='.nc')
+#' options(
+#'     calibration.end=as.POSIXct('1972-12-31', tz='GMT'),
+#'     cend=as.POSIXct('1972-12-31', tz='GMT')
+#' )
+#' ClimDown::qdm.netcdf.wrapper('./tiny_obs.nc', ci.file, out.nc, 'tasmax')
+#' unlink(ci.file)
+#' unlink(out.nc)
+#' }
+#'
 #' @references Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias Correction of GCM Precipitation by Quantile Mapping: How Well Do Methods Preserve Changes in Quantiles and Extremes?. Journal of Climate, 28(17), 6938-6959. doi: 10.1175/JCLI-D-14-00754.1
 #' @export
 qdm.netcdf.wrapper <- function(obs.file, gcm.file, out.file, varname='tasmax') {

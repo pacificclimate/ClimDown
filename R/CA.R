@@ -283,6 +283,14 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #' @return A list object with two values: 'indices' and 'weights', each of which is a vector with 30 items
 #'
+#' @examples
+#' \dontrun{
+#' options(
+#'     calibration.end=as.POSIXct('1972-12-31', tz='GMT')
+#' )
+#' analogues <- ClimDown::ca.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc')
+#' }
+#'
 #' @references Maurer, E. P., Hidalgo, H. G., Das, T., Dettinger, M. D., & Cayan, D. R. (2010). The utility of daily large-scale climate data in the assessment of climate change impacts on daily streamflow in California. Hydrology and Earth System Sciences, 14(6), 1125-1138.
 #' @export
 ca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {

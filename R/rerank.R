@@ -34,6 +34,23 @@ utils::globalVariables(c('ca', 'qdm'))
 #' @param out.file The file to create (or overwrite) with the final NetCDF output
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
+#' @examples
+#' \dontrun{
+#' options(
+#'     calibration.end=as.POSIXct('1972-12-31', tz='GMT')
+#' )
+#' ci.file <- tempfile(fileext='.nc')
+#' ClimDown::ci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', ci.file, 'tasmax')
+#' qdm.file <<- tempfile(fileext='.nc')
+#' ClimDown::qdm.netcdf.wrapper('./tiny_obs.nc', ci.file, qdm.file, 'tasmax')
+#' unlink(ci.file)
+#' analogues <<- ClimDown::ca.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc')
+#' out.file <- tempfile(fileext='.nc')
+#' ClimDown::rerank.netcdf.wrapper(qdm.file, './tiny_obs.nc', analogues, out.file, varname='tasmax')
+#' unlink(qdm.file)
+#' unlink(out.file)
+#' }
+#'
 #' @references Schefzik, R., Thorarinsdottir, T. L., & Gneiting, T. (2013). Uncertainty quantification in complex simulation models using ensemble copula coupling. Statistical Science, 28(4), 616-640.
 #'
 #' Wilks, D. S. (2015). Multivariate ensemble Model Output Statistics using empirical copulas. Quarterly Journal of the Royal Meteorological Society, 141(688), 945-952.
