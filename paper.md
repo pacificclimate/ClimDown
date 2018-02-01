@@ -23,7 +23,7 @@ affiliations:
   - name: Environment and Climate Change Canada
     index: 2
 date: 7 June 2017
---
+---
 
 # Summary
 
