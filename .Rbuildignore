@@ -9,4 +9,5 @@ devtestsuite.R
 .py
 R/BCSD/
 paper.md
+paper.bib
 COPYING
