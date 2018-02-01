@@ -25,7 +25,7 @@ Description: A suite of routines for downscaling coarse scale global
     Analogues with Quantile mapping reordering (BCCAQ). Developed by
     the the Pacific Climate Impacts Consortium (PCIC), Victoria,
     British Columbia, Canada.
-License: GPL-3
+License: GPL-3 | file LICENSE
 URL: https://www.r-project.org
 LazyData: yes
 BugReports: https://github.com/pacificclimate/ClimDown
