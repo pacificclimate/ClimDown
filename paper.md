@@ -22,7 +22,8 @@ affiliations:
     index: 1
   - name: Environment and Climate Change Canada
     index: 2
-date: 7 June 2017
+date: 1 February 2018
+bibliography: paper.bib
 ---
 
 # Summary
@@ -47,13 +48,3 @@ three downscaling steps: CI, CA, and QDM, as well as one wrapper that
 runs the entire BCCAQ pipeline.
 
 # References
-
-Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias Correction of GCM Precipitation by Quantile Mapping: How Well Do Methods Preserve Changes in Quantiles and Extremes?. Journal of Climate, 28(17), 6938-6959. doi: 10.1175/JCLI-D-14-00754.1
-
-Hunter, R. D., & Meentemeyer, R. K. (2005). Climatologically aided mapping of daily precipitation and temperature. Journal of Applied Meteorology, 44(10), 1501-1510.
-
-Maurer, E. P., Hidalgo, H. G., Das, T., Dettinger, M. D., & Cayan, D. R. (2010). The utility of daily large-scale climate data in the assessment of climate change impacts on daily streamflow in California. Hydrology and Earth System Sciences, 14(6), 1125-1138.
-
-Schefzik, R., Thorarinsdottir, T. L., & Gneiting, T. (2013). Uncertainty quantification in complex simulation models using ensemble copula coupling. Statistical Science, 28(4), 616-640.
-
-Werner, A. T., & Cannon, A. J. (2016). Hydrologic extremes - an intercomparison of multiple gridded statistical downscaling methods. Hydrology and Earth System Sciences, 20(4), 1483-1508. doi: 10.5194/hess-20-1483-2016
