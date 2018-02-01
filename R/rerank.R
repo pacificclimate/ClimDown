@@ -9,13 +9,47 @@ utils::globalVariables(c('ca', 'qdm'))
 
 #' @title High-level NetCDF wrapper for Quantile Reranking
 #'
-#' @description All files (save for the analogues_file) should have the same spatial domain.
+#' @description Quantile Reranking is the final, critical step in the
+#'     BCCAQ pipeline. Its purpose is this: since Climate Analogues
+#'     (CA) gets its high resolution information by using a linear
+#'     combination of historical daily time series for the domain as a
+#'     whole, it ends up reintroducing some bias. This is because the
+#'     quantile mapping bias correction step was performed only at
+#'     course resolution (of the GCM). Quantile Reranking fixes this
+#'     by re-applying a simple quantile mapping bias correction at
+#'     each grid box. The advantage of doing this as a final step is
+#'     that the downscaling method retains the primary advantage of
+#'     BCCA: high spatial consistency (e.g. when a storm or a heat
+#'     wave hits a specific area, it probably also hits neighboring
+#'     areas, etc.).
+#'
+#' @details All input files (save for the analogues_file) should have
+#'     the same spatial domain.
 #'
 #' @param qdm.file The output file from the QDM script
 #' @param obs.file Filename of high-res gridded historical observations
-#' @param analogues Temporal analogues... describe this more
+#' @param analogues Temporal analogues. This is a list of two arrays:
+#'     the index values and the fractional weights. Each array is the
+#'     length of the number of timesteps by k (typically 30).
 #' @param out.file The file to create (or overwrite) with the final NetCDF output
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
+#'
+#' @examples
+#' \dontrun{
+#' options(
+#'     calibration.end=as.POSIXct('1972-12-31', tz='GMT')
+#' )
+#' ci.file <- tempfile(fileext='.nc')
+#' ClimDown::ci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', ci.file, 'tasmax')
+#' qdm.file <<- tempfile(fileext='.nc')
+#' ClimDown::qdm.netcdf.wrapper('./tiny_obs.nc', ci.file, qdm.file, 'tasmax')
+#' unlink(ci.file)
+#' analogues <<- ClimDown::ca.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc')
+#' out.file <- tempfile(fileext='.nc')
+#' ClimDown::rerank.netcdf.wrapper(qdm.file, './tiny_obs.nc', analogues, out.file, varname='tasmax')
+#' unlink(qdm.file)
+#' unlink(out.file)
+#' }
 #'
 #' @references Schefzik, R., Thorarinsdottir, T. L., & Gneiting, T. (2013). Uncertainty quantification in complex simulation models using ensemble copula coupling. Statistical Science, 28(4), 616-640.
 #'
