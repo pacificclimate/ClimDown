@@ -82,4 +82,3 @@ pre-set. Options must be configured using R's \code{\link[base]{options}}
 function. They can be set by using an .Rprofile file, or on the R
 session prompt prior to executing any \pkg{ClimDown} wrapper functions.
 }
-

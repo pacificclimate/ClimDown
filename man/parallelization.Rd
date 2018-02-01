@@ -29,4 +29,3 @@ stopImplicitCluster()}
 \seealso{
 \pkg{doParallel} and \pkg{doMPI}
 }
-

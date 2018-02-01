@@ -23,7 +23,21 @@ observations plus the GCM-based output of CI as input to the
 algorithm and then performs a quantile perturbation/quantile
 mapping bias correction. The output is written out to out.file.
 }
+\examples{
+\dontrun{
+ci.file <<- tempfile(fileext='.nc')
+ClimDown::ci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', ci.file, 'tasmax')
+out.nc <- tempfile(fileext='.nc')
+options(
+    calibration.end=as.POSIXct('1972-12-31', tz='GMT'),
+    cend=as.POSIXct('1972-12-31', tz='GMT')
+)
+ClimDown::qdm.netcdf.wrapper('./tiny_obs.nc', ci.file, out.nc, 'tasmax')
+unlink(ci.file)
+unlink(out.nc)
+}
+
+}
 \references{
 Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias Correction of GCM Precipitation by Quantile Mapping: How Well Do Methods Preserve Changes in Quantiles and Extremes?. Journal of Climate, 28(17), 6938-6959. doi: 10.1175/JCLI-D-14-00754.1
 }
-

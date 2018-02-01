@@ -28,7 +28,15 @@ each of the 30 closest "analogue" timesteps, CA records the
 integer number of the timestep and a weight for each of the
 analogues. These are all saved in output.file.
 }
+\examples{
+\dontrun{
+options(
+    calibration.end=as.POSIXct('1972-12-31', tz='GMT')
+)
+analogues <- ClimDown::ca.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc')
+}
+
+}
 \references{
 Maurer, E. P., Hidalgo, H. G., Das, T., Dettinger, M. D., & Cayan, D. R. (2010). The utility of daily large-scale climate data in the assessment of climate change impacts on daily streamflow in California. Hydrology and Earth System Sciences, 14(6), 1125-1138.
 }
-

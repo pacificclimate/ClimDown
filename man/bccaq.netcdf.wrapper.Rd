@@ -41,7 +41,18 @@ resulting in a more accurate representation of event-scale
 spatial gradients; this also prevents the downscaled outputs
 from drifting too far from the climate model's long-term trend.
 }
+\examples{
+\dontrun{
+out.nc <- tempfile(fileext='.nc')
+options(
+    calibration.end=as.POSIXct('1972-12-31', tz='GMT'),
+    cend=as.POSIXct('1972-12-31', tz='GMT')
+)
+ClimDown::bccaq.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', out.nc, 'tasmax')
+unlink(out.nc)
+}
+
+}
 \references{
 Werner, A. T., & Cannon, A. J. (2016). Hydrologic extremes  - an intercomparison of multiple gridded statistical downscaling methods. Hydrology and Earth System Sciences, 20(4), 1483-1508. doi: 10.5194/hess-20-1483-2016
 }
-

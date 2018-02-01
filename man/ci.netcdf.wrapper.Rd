@@ -26,9 +26,16 @@ is calculated for each month. Finally the observed climatology is
 added to the GCM-based climate imprint and the final result is
 saved to output.file.
 }
+\examples{
+\dontrun{
+ci.nc <- tempfile(fileext='.nc')
+ClimDown::ci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', ci.nc)
+unlink(ci.nc)
+}
+
+}
 \references{
 Hunter, R. D., & Meentemeyer, R. K. (2005). Climatologically aided mapping of daily precipitation and temperature. Journal of Applied Meteorology, 44(10), 1501-1510.
 
 Ahmed, K. F., Wang, G., Silander, J., Wilson, A. M., Allen, J. M., Horton, R., & Anyah, R. (2013). Statistical downscaling and bias correction of climate model outputs for climate change impact assessment in the US northeast. Global and Planetary Change, 100, 320-332.
 }
-
