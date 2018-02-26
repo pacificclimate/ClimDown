@@ -1,6 +1,6 @@
 Package: ClimDown
-Version: 1.0.6
-Date: 2018-02-01
+Version: 1.0.7
+Date: 2018-02-26
 Title: Climate Downscaling Library for Daily Climate Model Output
 Authors@R: c(person("Alex Cannon", role = "aut", email = "acannon@uvic.ca"),
 	     person("James Hiebert", role = c("aut", "cre"), email = "hiebert@uvic.ca"),
