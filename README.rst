@@ -140,6 +140,6 @@ Though Windows binaries for ClimDown are available `from CRAN`_, no
 effort has been made to optimize this package for Windows and your
 mileage may vary.
 
-.. _previously written: http://james.hiebert.name/blog/work/2016/04/26/BCCA/
+.. _previously written: http://james.hiebert.name/blog/work/2016/04/26/BCCA.html
 .. _complexities involved in downscaling performance: https://github.com/pacificclimate/ClimDown/blob/doc/doc/report.md#rewriting-numerous-algorithms
 .. _from CRAN: https://cran.r-project.org/web/packages/ClimDown/index.html
