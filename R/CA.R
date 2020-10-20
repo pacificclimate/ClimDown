@@ -127,7 +127,7 @@ apply.analogue <- function(x, weights) {
 # analog.indices: vector of time indices that correspond to the timesteps to compose together
 # weights: vector of length num.analogues corresponding to the analog indices
 # obs.nc: An open netcdf file containing gridded observations
-apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasmax') {
+apply.analogues.netcdf.c <- function(analog.indices, weights, obs.nc, varid='tasmax') {
     dims <- c(obs.nc$var[[varid]]$size[1:2],getOption('n.analogues'))
     apply(
         array(
@@ -146,6 +146,8 @@ apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasma
         1:2, sum
     )
 }
+
+apply.analogues.netcdf <- compiler::cmpfun(apply.analogues.netcdf.c)
 
 # obs.at.analogues should be a matrix (n.analogues x number of cells)
 # gcm.values should a 1d vector of gcm values for each cell at the given time step
