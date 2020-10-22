@@ -3,6 +3,19 @@ reorder <- function(x,ix) {
   return(rx)
 }
 
+## This is a custom version of unsplit.
+## The built in unsplit handles either vectors or frames
+## This one is vector-only, and faster, because it doesn't
+## check input types.
+vector.unsplit <- function (value, f, drop = FALSE)
+{
+  len <- length(if (is.list(f)) f[[1L]] else f)
+  x <- value[[1L]][rep(NA, len)]
+  split(x, f, drop = drop) <- value
+  x
+}
+
+
 ## Package check tools can't detect foreach's use of non-standard evaluation
 ## Ensure that they skip these variable names
 utils::globalVariables(c('ca', 'qdm'))
@@ -56,6 +69,7 @@ utils::globalVariables(c('ca', 'qdm'))
 #' Wilks, D. S. (2015). Multivariate ensemble Model Output Statistics using empirical copulas. Quarterly Journal of the Royal Meteorological Society, 141(688), 945-952.
 #' @export
 rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varname='tasmax') {
+    print("Running rerank with custom unsplit version.")
     ptm <- proc.time()
 
     qdm.nc <- nc_open(qdm.file)
@@ -127,7 +141,7 @@ rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varna
                 ranks <- lapply(ca, rank, ties.method='average')
                 ## Reorder the days of qdm on cell at a time
                 array(
-                    unsplit(
+                    vector.unsplit(
                         mapply(
                             reorder,
                             split(qdm, by.cell),
