@@ -215,9 +215,12 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
     # substract the GCM at this time step from the aggregated obs *for every library time value*
     # square that difference
 
-    diffs <- (agged.obs - array(gcm, dim(agged.obs))) ^ 2
-    diffs <- apply(diffs, 3, sum, na.rm=T)
-
+    diffs <- array(dim=c(dim(agged.obs))[3])
+    for(day in 1:dim(agged.obs)[3]) {
+      distances <- (agged.obs[,,day] - gcm) ^ 2
+      diffs[day] <- sum(distances, na.rm=T)
+    }
+    
     # Then find the 30 lowest differences
     # returns the indices for the n closest analogues
     # of this particular GCM timestep
