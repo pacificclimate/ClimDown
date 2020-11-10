@@ -205,6 +205,7 @@ analogue.search.space <- function(times, today,
 # now: PCICt value of the current time step
 # returns 30 indices of the timestep for the closest analog and their corresponding weights
 find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.analogues')) {
+
     # FIXME: alib is only be defined for each julian day in any year...
     # it is 50x redundant as defined and could be precomputed
     ti <- analogue.search.space(times, now)
@@ -215,9 +216,15 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
     # substract the GCM at this time step from the aggregated obs *for every library time value*
     # square that difference
 
-    diffs <- (agged.obs - array(gcm, dim(agged.obs))) ^ 2
-    diffs <- apply(diffs, 3, sum, na.rm=T)
+    diffs <- array(dim=c(dim(agged.obs))[3])
+    for(day in 1:dim(agged.obs)[3]) {
+      distances <- (agged.obs[,,day] - gcm) ^ 2
+      diffs[day] <- sum(distances, na.rm=T)
+    }
 
+    #todo - investigate abs instead of squaring - it's slightly faster in tests
+    #todo - investigate selection in for loop
+    
     # Then find the 30 lowest differences
     # returns the indices for the n closest analogues
     # of this particular GCM timestep
@@ -294,6 +301,7 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 #' @references Maurer, E. P., Hidalgo, H. G., Das, T., Dettinger, M. D., & Cayan, D. R. (2010). The utility of daily large-scale climate data in the assessment of climate change impacts on daily streamflow in California. Hydrology and Earth System Sciences, 14(6), 1125-1138.
 #' @export
 ca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
+    print("Using test version of CA with for loops")
     is.pr <- varname == 'pr'
 
     # Read in GCM data
