@@ -15,6 +15,8 @@ vector.unsplit <- function (value, f, drop = FALSE)
   x
 }
 
+vector.unsplit_c <- compiler::cmpfun(vector.unsplit)
+
 
 ## Package check tools can't detect foreach's use of non-standard evaluation
 ## Ensure that they skip these variable names
@@ -69,7 +71,7 @@ utils::globalVariables(c('ca', 'qdm'))
 #' Wilks, D. S. (2015). Multivariate ensemble Model Output Statistics using empirical copulas. Quarterly Journal of the Royal Meteorological Society, 141(688), 945-952.
 #' @export
 rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varname='tasmax') {
-    print("Running rerank with custom unsplit version.")
+    print("Running rerank with byte compiled custom unsplit version.")
     ptm <- proc.time()
 
     qdm.nc <- nc_open(qdm.file)
@@ -141,7 +143,7 @@ rerank.netcdf.wrapper <- function(qdm.file, obs.file, analogues, out.file, varna
                 ranks <- lapply(ca, rank, ties.method='average')
                 ## Reorder the days of qdm on cell at a time
                 array(
-                    vector.unsplit(
+                    vector.unsplit_c(
                         mapply(
                             reorder,
                             split(qdm, by.cell),
