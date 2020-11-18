@@ -206,21 +206,46 @@ analogue.search.space <- function(times, today,
 # returns 30 indices of the timestep for the closest analog and their corresponding weights
 find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.analogues')) {
 
-    # FIXME: alib is only be defined for each julian day in any year...
-    # it is 50x redundant as defined and could be precomputed
-    ti <- analogue.search.space(times, now)
-    agged.obs <- agged.obs[,,ti,drop=FALSE]
-
-    # Find the n.analogue closest observations from the library
-    # (obs years * (delta days * 2 + 1)) x cells
-    # substract the GCM at this time step from the aggregated obs *for every library time value*
-    # square that difference
-
-    diffs <- array(dim=c(dim(agged.obs))[3])
-    for(day in 1:dim(agged.obs)[3]) {
-      distances <- (agged.obs[,,day] - gcm) ^ 2
-      diffs[day] <- sum(distances, na.rm=T)
+  # FIXME: alib is only be defined for each julian day in any year...
+  # it is 50x redundant as defined and could be precomputed
+  ti <- analogue.search.space(times, now)
+  agged.obs <- agged.obs[,,ti,drop=FALSE]
+  
+  # Find the n.analogue closest observations from the library
+  # (obs years * (delta days * 2 + 1)) x cells
+  # substract the GCM at this time step from the aggregated obs *for every library time value*
+  # square that difference
+  
+  closest <- array(dim=c(n.analogues, 2))
+  max.distance <- c(1, 1e20)
+  for(day in 1:dim(agged.obs)[3]) {
+    distances <- (agged.obs[,,day] - gcm) ^ 2
+    distance <- sum(distances, na.rm=T)
+    if(day <= n.analogues) {
+      #print("Automatically adding")
+      #print(c(day, distance))
+      closest[day,] <- c(day, distance)
+      if(distance <= max.distance[2]) {
+        max.distance <- c(day, distance)
+      }
     }
+    else if(distance < max.distance[2]) {
+      #print("New distance is less than max.distance")
+      #print(c(day, distance))
+      #print("replacing row")
+      #print(max.distance[1])
+      closest[max.distance[1],] <- c(day, distance)
+      m <- which.max(closest[,2])
+      #print("m is now")
+      #print(m)
+      max.distance <- c(m, closest[m,2])
+    }
+    #print("Closest is now")
+    #print(closest)
+    #print("max.distance is now")
+    #print(max.distance)
+  }
+  
 
     #todo - investigate abs instead of squaring - it's slightly faster in tests
     #todo - investigate selection in for loop
@@ -228,7 +253,7 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
     # Then find the 30 lowest differences
     # returns the indices for the n closest analogues
     # of this particular GCM timestep
-    analogue.indices <- quickest.select(diffs, n.analogues)
+    analogue.indices <- sort(closest[,1])
 
     # Constructed analogue weights
     na.mask <- !is.na(agged.obs[,,1])
