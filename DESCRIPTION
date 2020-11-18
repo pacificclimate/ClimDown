@@ -29,4 +29,5 @@ Description: A suite of routines for downscaling coarse scale global
 License: GPL-3 | file LICENSE
 URL: https://www.r-project.org
 LazyData: yes
+ByteCompile: yes
 BugReports: https://github.com/pacificclimate/ClimDown
