@@ -215,43 +215,29 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
   # (obs years * (delta days * 2 + 1)) x cells
   # substract the GCM at this time step from the aggregated obs *for every library time value*
   # square that difference
+  # keep the K smallest values (K <- n.analogues)
   
   closest <- array(dim=c(n.analogues, 2))
-  max.distance <- c(1, 1e20)
+  current.furthest <- c(0, 1e20)
   for(day in 1:dim(agged.obs)[3]) {
+    #todo - try doing these in a single step?
     distances <- (agged.obs[,,day] - gcm) ^ 2
     distance <- sum(distances, na.rm=T)
+    
     if(day <= n.analogues) {
-      #print("Automatically adding")
-      #print(c(day, distance))
       closest[day,] <- c(day, distance)
-      if(distance <= max.distance[2]) {
-        max.distance <- c(day, distance)
+      if(distance >= current.furthest[2]) {
+        current.furthest <- c(day, distance)
       }
     }
-    else if(distance < max.distance[2]) {
-      #print("New distance is less than max.distance")
-      #print(c(day, distance))
-      #print("replacing row")
-      #print(max.distance[1])
-      closest[max.distance[1],] <- c(day, distance)
+    else if(distance < current.furthest[2]) {
+      closest[current.furthest[1],] <- c(day, distance)
       m <- which.max(closest[,2])
-      #print("m is now")
-      #print(m)
-      max.distance <- c(m, closest[m,2])
+      current.furthest <- c(m, closest[m,2])
     }
-    #print("Closest is now")
-    #print(closest)
-    #print("max.distance is now")
-    #print(max.distance)
   }
   
-
-    #todo - investigate abs instead of squaring - it's slightly faster in tests
-    #todo - investigate selection in for loop
-    
-    # Then find the 30 lowest differences
-    # returns the indices for the n closest analogues
+    # Returns the indices for the n closest analogues
     # of this particular GCM timestep
     analogue.indices <- sort(closest[,1])
 
@@ -326,7 +312,7 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 #' @references Maurer, E. P., Hidalgo, H. G., Das, T., Dettinger, M. D., & Cayan, D. R. (2010). The utility of daily large-scale climate data in the assessment of climate change impacts on daily streamflow in California. Hydrology and Earth System Sciences, 14(6), 1125-1138.
 #' @export
 ca.netcdf.wrapper <- function(gcm.file, obs.file, varname='tasmax') {
-    print("Using test version of CA with for loops")
+    print("Using test version of CA with for loops and preselection")
     is.pr <- varname == 'pr'
 
     # Read in GCM data
