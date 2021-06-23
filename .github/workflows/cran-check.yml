@@ -74,6 +74,11 @@ jobs:
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
 
+      - name: Install documentation dependencies
+        run: |
+          Rscript -e "install.packages('roxygen2')"
+          Rscript -e "roxygen2::roxygenize()"
+
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
