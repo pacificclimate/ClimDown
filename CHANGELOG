@@ -1,0 +1,99 @@
+## [1.0.8] - 2021-04-26
+### Speed up CA process with better memory management and byte compiling.
+
+## [1.0.7] - 2017-02-26
+### Ensure references are cited in Journal of Open Source Software paper
+
+## [1.0.6] - 2018-02-01
+### Moves JOSS references into BibTeX
+
+## [1.0.5] - 2018-02-01
+### Fix typo in Journal of Open Source Software paper
+
+## [1.0.4] - 2018-02-01
+### Addresses comments from the Journal of Open Source Software review
+
+## [1.0.3] - 2017-06-07
+### Adds paper for The Journal of Open Source Software
+
+## [1.0.2] - 2016-12-01
+### Ensure that package check tools ignore NSE vars
+
+## [1.0.1] - 2016-11-30
+### Fixes package metadata for CRAN
+
+## [1.0.0] - 2016-11-29
+### First stable release
+- This is just a "rebranding" of 0.7.0. Zero changes to the code.
+
+## [0.7.0] - 2016-09-22
+### Bugfix release
+- Fixes regression bug introduced by version 0.4.1
+
+## [0.6.0] - 2016-09-16
+### Bugfix release
+- Adds spatial domain checking to CI interpolation
+
+## [0.5.0] - 2016-09-13
+### Bugfix release
+- Note the minor version bump to indicate an API change from 0.4.2
+  (which really *should* have been minor version bump... sorry users!)
+- Reverts another attempt a parallel reordering. This appears to be
+  impossible without a cluster file system or some really weird HDF5
+  software configuration that we cannot identify.
+- Adds _FillValue = NaNf attribute to output variables
+
+## [0.4.2] - 2016-09-08
+### Documentation and naming release
+- Adds documentation for global options
+- Adds documentation for parallelization usage
+- Adds academic references to all wrapper functions
+- Renames functions to correspond to scientific literature
+
+## [0.4.1] - 2016-09-02
+### Memory management release
+- Small changes ensuring that garbage collection happens at the end of
+  each chunked I/O loop. This helps contain the memory requirements on
+  large compute jobs.
+
+## [0.4.0] - 2016-08-19
+### Bugfix release (alters results of computations)
+- Fixes an issue where QDM results were transposed during reording during certain cases
+
+## [0.3.0] - 2016-08-08
+### Bugfix release (alters results of computations)
+- Fixes an issue with QPQM reordering (ensures that reordering happens for each cell)
+- Adds two global options: check.neg.precip and check.units which can be used to enable/disable checks during data input
+
+## [0.2.3] - 2016-07-15
+### Bugfix release
+- Adds robustness to BCCA grid aggregation
+
+## [0.2.2] - 2016-07-05
+### Bugfix release
+- Adds a third dimension of n.analogues to apply analogues function
+- Combines calibration date user options
+- Uses spatially sorted order in QPQM reordering
+- Ensures negative precip is removed from all pipeline stages
+- Omits the use of calibration start date for the GCM in QPQM
+- Ports TravisCI to use native R language support without sudo
+
+## [0.2.1] - 2016-06-23
+### Bugfix release
+- Reverts parallel support for BCCA analogue application (pending investigation)
+
+## [0.2.0] - 2016-06-08
+### Bugfix and testing release
+- Adds integration tests for all downscaling methods and sets thereof
+- Add tests for BCCI's chunked.factored.running.mean
+- Factors out variable reading to perform all unit conversion and negative precip removal in one place
+- Adds better logic for checking for overlap in configured time ranges
+- Fixes a corner case in QPQM's muliyear block mode
+- Adds a config option for 'target.units'
+- Ensures that QDM and QPQM both use parallel main loops if available
+- Adds a repo README and contributors' guide
+
+## [0.1.0] - 2016-04-20
+### First Release
+- All QDM/BCCAQv2 methods are fully implemented and can be run
+  end-to-end

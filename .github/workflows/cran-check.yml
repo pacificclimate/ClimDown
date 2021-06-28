@@ -1,10 +1,10 @@
-# this action runs the same checks on the codebase that CRAN does:
+# this action runs the same checks on the repository that CRAN does:
 #     1. windows container with latest R release
-#     2. mac container with latest R release
-#     3. linux container with latest R release
-#     4. linux container with next R release
+#     2. linux container with latest R release
+#     3. linux container with next R release
 # to offer a preview of whether changes to the package will be
-# accepted by CRAN.
+# accepted by CRAN. Testing on Mac is not done because there is not
+# udunits2 library for Mac, as far as I can tell. 
 # It also runs the tests that are too slow for CRAN. These extra tests
 # are in the tests/extra-tests directory.
 # it is derived from the check-standard action from the r-lib repository,
@@ -24,7 +24,6 @@ jobs:
       matrix:
         config:
           - {os: windows-latest, r: 'release'}
-          - {os: macOS-latest, r: 'release'}
           - {os: ubuntu-20.04, r: 'release', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04,   r: 'devel', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest", http-user-agent: "R/4.1.0 (ubuntu-20.04) R (4.1.0 x86_64-pc-linux-gnu x86_64 linux-gnu) on GitHub Actions"}
 
@@ -73,18 +72,15 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
-
-      - name: Install documentation dependencies
+      - name: Build documentation
         run: |
           Rscript -e "install.packages('roxygen2')"
           Rscript -e "roxygen2::roxygenize()"
-
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
         run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
         shell: Rscript {0}
-
       - name: Upload check results
         if: failure()
         uses: actions/upload-artifact@master
