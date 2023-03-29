@@ -205,7 +205,7 @@ nc_gety <- function(nc) {
 }
 
 is.clim.file <- function(obs) {
-    ncvar_get(obs, 'time') == 12
+    length(ncvar_get(obs, 'time')) == 12
 }
 
 #' @title High-level NetCDF wrapper for Climate Imprint (CI)
@@ -267,6 +267,7 @@ ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax')
     print('Interpolating the GCM daily anomalies to observation grid')
     chunked.interpolate.gcm.to.obs(gcm.lats, gcm.lons, obs.lats, obs.lons, anom, output.nc, varname, nt.per.chunk)
 
+    print('Check observations file')
     if (is.clim.file(nc.obs)) {
         print('Reading the monthly climatologies from the observations')
         monthly.climatologies <- ncvar_get(nc.obs, varname)
