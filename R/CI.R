@@ -204,20 +204,26 @@ nc_gety <- function(nc) {
     ncvar_get(nc, 'lat')
 }
 
+is.clim.file <- function(obs) {
+    ncvar_get(obs, 'time') == 12
+}
+
 #' @title High-level NetCDF wrapper for Climate Imprint (CI)
 #'
 #' @description CI performs several steps. For the GCM input it
 #' calculates daily climate anomalies from a given calibration period
 #' (default 1951-2005). These daily GCM anomalies are interpolated to
 #' the high-resolution observational grid. These interpolated daily
-#' anomalies constitute the "Climate Imprint". The high resolution
-#' gridded observations are then grouped into months and a climatology
+#' anomalies constitute the "Climate Imprint". If the high resolution
+#' gridded observations are daily observations instead of pre-computed
+#' monthly climatologies, they are then grouped into months and a climatology
 #' is calculated for each month. Finally the observed climatology is
 #' added to the GCM-based climate imprint and the final result is
 #' saved to output.file.
 #'
 #' @param gcm.file Filename of GCM simulations
-#' @param obs.file Filename of high-res gridded historical observations
+#' @param obs.file Filename of high-res gridded historical observations 
+#' (either daily data or monthly climatologies)
 #' @param output.file Filename to create (or overwrite) with the climate imprint outputs
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
@@ -261,11 +267,16 @@ ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax')
     print('Interpolating the GCM daily anomalies to observation grid')
     chunked.interpolate.gcm.to.obs(gcm.lats, gcm.lons, obs.lats, obs.lons, anom, output.nc, varname, nt.per.chunk)
 
-    print('Calculating the monthly factor across the observation time series')
-    monthly.factor <- factor(as.numeric(format(obs.times, '%m')))
-    
-    print('Calculating the monthly climatologies for the observations')
-    monthly.climatologies <- chunked.factored.running.mean(nc.obs, monthly.factor, varname, nt.per.chunk)
+    if (is.clim.file(nc.obs)) {
+        print('Reading the monthly climatologies from the observations')
+        monthly.climatologies <- ncvar_get(nc.obs, varname)
+    } else {
+        print('Calculating the monthly factor across the observation time series')
+        monthly.factor <- factor(as.numeric(format(obs.times, '%m')))
+        
+        print('Calculating the monthly climatologies for the observations')
+        monthly.climatologies <- chunked.factored.running.mean(nc.obs, monthly.factor, varname, nt.per.chunk)   
+    }
     
     nc_close(nc.obs)
 
