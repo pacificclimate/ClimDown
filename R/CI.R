@@ -145,46 +145,30 @@ interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons, obs.lats, obs.lons, gcm) 
 chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
                                            obs.lats, obs.lons,
                                            gcm, output.nc, varname,
-                                           nt.per.chunk=100) {
-    nt <- dim(gcm)[3]
-    ncells <- length(gcm.lats) * length(gcm.lons)
-
-    stopifnot(output.nc$var[[varname]]$varsize == c(length(obs.lons), length(obs.lats), dim(gcm)[3]))
+                                           i0, iN, nt) {
     obs.grid <- xy.grid(obs.lats, obs.lons)
-
-    if (!(is.range.subset(range(obs.lons), range(gcm.lons)) &
-          is.range.subset(range(obs.lats), range(gcm.lats)))) {
-        stop("Observation domain must be a proper spatial subset of the GCM domain (but it's not). Please check your input files.")
-    }
 
     src <- list(x=gcm.lons, y=gcm.lats)
     dst <- matrix(c(obs.grid$x, obs.grid$y), ncol=2)
-
-    chunks <- chunk.indices(nt, nt.per.chunk)
-
-    for (i in chunks) {
-        i0 <- i['start']
-        iN <- i['stop']
-        print(paste("Interpolating timesteps", i0, "-", iN, "/", nt, "to file", output.nc$filename))
-        rv <- array(
-            apply(gcm[,,i0:iN], 3, function(z) {
-                src$z <- z
-                interp.surface(src, dst)
-            }),
-            dim=c(length(obs.lons), length(obs.lats), i['length'])
-        )
-        ncvar_put(output.nc, varname, vals=rv, start=c(1, 1, i0), count=c(-1, -1, i['length']))
-        rm(rv)
-        gc()
-    }
+    rv <- array(
+        apply(gcm[,,nt], 3, function(z) {
+            src$z <- z
+            interp.surface(src, dst)
+        }),
+        dim=c(length(obs.lons), length(obs.lats), nt)
+    )
+    ncvar_put(output.nc, varname, vals=rv, start=c(1, 1, i0), count=c(-1, -1, nt))
+    rm(rv)
+    gc()
+    
     nc_sync(output.nc)
     NULL
 }
 
 # FIXME: this name is duplicated from CA.R
-mk.output.ncdf <- function(file.name, varname, gcm.template, obs.template, global.attrs=list()) {
-    dims <- c(obs.template$var[[varname]]$dim[1:2], gcm.template$var[[varname]]$dim[3])
-    var <- ncvar_def(varname, getOption('target.units')[varname], dims, NA)
+mk.output.ncdf <- function(file.name, gcm.varname, obs.varname, gcm.template, obs.template, global.attrs=list()) {
+    dims <- c(obs.template$var[[obs.varname]]$dim[1:2], gcm.template$var[[gcm.varname]]$dim[3])
+    var <- ncvar_def(gcm.varname, getOption('target.units')[gcm.varname], dims, NA)
     nc <- nc_create(file.name, var)
     mapply(function(name, value) {
         ncatt_put(nc, varid=0, attname=name, attval=value)
@@ -201,11 +185,12 @@ nc_getx <- function(nc) {
 }
 
 nc_gety <- function(nc) {
-    ncvar_get(nc, 'lat')
+    sort(ncvar_get(nc, 'lat'))
 }
 
 is.clim.file <- function(obs) {
-    length(ncvar_get(obs, 'time')) == 12
+    #length(ncvar_get(obs, 'time')) == 12
+    "climatology_bnds" %in% names(obs$var) | "climatology_bounds" %in% names(obs$var)
 }
 
 #' @title High-level NetCDF wrapper for Climate Imprint (CI)
@@ -238,19 +223,15 @@ is.clim.file <- function(obs) {
 #'
 #' Ahmed, K. F., Wang, G., Silander, J., Wilson, A. M., Allen, J. M., Horton, R., & Anyah, R. (2013). Statistical downscaling and bias correction of climate model outputs for climate change impact assessment in the US northeast. Global and Planetary Change, 100, 320-332.
 #' @export
-ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
+ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file) {
 
+    gcm.varname <- getOption('gcm.varname')
+    obs.varname <- getOption('obs.varname')
+    
     nc.gcm <- nc_open(gcm.file)
-    gcm <- CD_ncvar_get(nc.gcm, varname)
     gcm.lats <- nc_gety(nc.gcm)
     gcm.lons <- nc_getx(nc.gcm)
     gcm.times <- netcdf.calendar(nc.gcm)
-    
-    print('Calculating daily anomalies on the GCM')
-    cal <- attr(gcm.times, 'cal')
-    cstart <- as.PCICt(getOption('calibration.start'), cal=cal)
-    cend <- as.PCICt(getOption('calibration.end'), cal=cal)
-    anom <- daily.anomalies(gcm, gcm.times, cstart, cend, varname)
 
     nc.obs <- nc_open(obs.file)
     obs.lats <- nc_gety(nc.obs)
@@ -261,22 +242,45 @@ ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax')
     nt.per.chunk <- optimal.chunk.size(length(obs.lats) * length(obs.lons), getOption('max.GB'))
 
     print('Creating cache file for the interpolated GCM')
-    output.nc <-mk.output.ncdf(output.file, varname, nc.gcm, nc.obs)
+    output.nc <-mk.output.ncdf(output.file, gcm.varname, obs.varname, nc.gcm, nc.obs)
+    stopifnot(output.nc$var[[gcm.varname]]$varsize == c(length(obs.lons), length(obs.lats), length(gcm.times)))
+    if (!(is.range.subset(range(obs.lons), range(gcm.lons)) &
+          is.range.subset(range(obs.lats), range(gcm.lats)))) {
+        stop("Observation domain must be a proper spatial subset of the GCM domain (but it's not). Please check your input files.")
+    }
+
+    n.lons <- length(gcm.lons)
+    n.lats <- length(gcm.lats)
+    n.times <- length(gcm.times)
+    anom <- array(NA, c(n.lons, n.lats, nt.per.chunk))
+    print('Calculating daily anomalies on the GCM and interpolating to observation grid')
+    cal <- attr(gcm.times, 'cal')
+    cstart <- as.PCICt(getOption('calibration.start'), cal=cal)
+    cend <- as.PCICt(getOption('calibration.end'), cal=cal)
+    chunks <- chunk.indices(n.times, nt.per.chunk)
+    for (i in chunks) {
+        i0 <- i['start']
+        iN <- i['stop']
+        print(paste("Calculating daily anomalies for timesteps", i0, "-", iN, "/", n.times))
+        gcm <- CD_ncvar_get(nc.gcm, gcm.varname, start=c(1,1,i0), count=c(n.lons,n.lats,i['length']))
+        anom[,,1:i['length']] <- daily.anomalies(gcm, gcm.times[i0:iN], cstart, cend, gcm.varname)
+        rm(gcm)
+        print(paste("Interpolating the GCM daily anomalies to observation grid for timesteps", i0, "-", iN, "/", n.times))
+        chunked.interpolate.gcm.to.obs(gcm.lats, gcm.lons, obs.lats, obs.lons, anom, output.nc, gcm.varname, i0, iN, i['length'])
+    }
+    
     nc_close(nc.gcm)
- 
-    print('Interpolating the GCM daily anomalies to observation grid')
-    chunked.interpolate.gcm.to.obs(gcm.lats, gcm.lons, obs.lats, obs.lons, anom, output.nc, varname, nt.per.chunk)
 
     print('Check observations file')
     if (is.clim.file(nc.obs)) {
         print('Reading the monthly climatologies from the observations')
-        monthly.climatologies <- ncvar_get(nc.obs, varname)
+        monthly.climatologies <- ncvar_get(nc.obs, obs.varname)
     } else {
         print('Calculating the monthly factor across the observation time series')
         monthly.factor <- factor(as.numeric(format(obs.times, '%m')))
         
         print('Calculating the monthly climatologies for the observations')
-        monthly.climatologies <- chunked.factored.running.mean(nc.obs, monthly.factor, varname, nt.per.chunk)   
+        monthly.climatologies <- chunked.factored.running.mean(nc.obs, monthly.factor, obs.varname, nt.per.chunk)   
     }
     
     nc_close(nc.obs)
@@ -285,7 +289,7 @@ ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax')
     monthly.factor <- factor(as.numeric(format(gcm.times, '%m')))
 
     print('Adding the monthly climatologies to the interpolated GCM')
-    apply.climatologies.nc(output.nc, monthly.climatologies, monthly.factor, varname, nt.per.chunk)
+    apply.climatologies.nc(output.nc, monthly.climatologies, monthly.factor, gcm.varname, nt.per.chunk)
     nc_close(output.nc)
 }
 
