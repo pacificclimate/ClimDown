@@ -12,10 +12,14 @@ is.range.subset <- function(inner, outer) {
 }
 
 # O(n) time, O(n) space
-monthly.climatologies <- function(gcm, gcm.times) {
+monthly.climatologies <- function(gcm, gcm.times, varname) {
     monthly.factor <- factor(format(gcm.times, '%m'))
     rv <- apply(gcm, 1:2, function(x) {
-        tapply(x, monthly.factor, mean)
+        if (varname == 'pr') {
+            tapply(x, monthly.factor, sum)
+        } else {
+            tapply(x, monthly.factor, mean)
+        }
     })
     aperm(rv, c(2, 3, 1))
 }
@@ -24,7 +28,7 @@ monthly.climatologies <- function(gcm, gcm.times) {
 daily.anomalies <- function(gcm, gcm.times, cal.start, cal.end, varname) {
     `%op%` <- ifelse (varname == 'pr', `/`, `-`)
     ti <- compute.time.overlap(gcm.times, cal.start, cal.end)
-    clima <- monthly.climatologies(gcm[,,ti], gcm.times[ti])
+    clima <- monthly.climatologies(gcm[,,ti], gcm.times[ti], varname)
     months <- as.integer(format(gcm.times, '%m'))
     array(
         mapply(
