@@ -13,14 +13,23 @@ is.range.subset <- function(inner, outer) {
 
 # O(n) time, O(n) space
 monthly.climatologies <- function(gcm, gcm.times, varname) {
-    monthly.factor <- factor(format(gcm.times, '%m'))
-    rv <- apply(gcm, 1:2, function(x) {
-        if (varname == 'pr') {
-            tapply(x, monthly.factor, sum)
-        } else {
+    if (varname == 'pr') { # PRISM climatologies given as monthly total climatologies
+        # Calculate total precipitation by month for full baseline series
+        monthly.ts.factor <- factor(format(gcm.times, '%Y-%m'))
+        clim.mon.factor <- factor(format(as.Date(paste0(levels(monthly.ts.factor), '-01')), '%m'))
+        monthly.totals <- apply(gcm, 1:2, function(x, fac) {
+            tapply(x, fac, sum, na.rm=T)
+        }, monthly.ts.factor)
+        # Take average of monthly totals by calendar month
+        rv <- apply(monthly.totals, 2:3, function(x, fac) {
+            tapply(x, fac, mean, na.rm=T)
+        }, clim.mon.factor)
+    } else {
+        monthly.factor <- factor(format(gcm.times, '%m'))
+        rv <- apply(gcm, 1:2, function(x) {
             tapply(x, monthly.factor, mean)
-        }
-    })
+        })
+    }
     aperm(rv, c(2, 3, 1))
 }
 
