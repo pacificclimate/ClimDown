@@ -73,10 +73,13 @@ anywhere else in the world.
 Installation
 ============
 
-You can install the latest `ClimDown release from CRAN`_ using the R
-interpreter: ``> install.packages('climdex.pcic')``
+`ClimDown` is not currently available from CRAN via `> install.packages('ClimDown')`, but `several archived release tarballs`_ are. One can install these as such:
 
-.. _ClimDown release from CRAN: http://cran.r-project.org/web/packages/ClimDown/index.html
+> install.packages('udunits2')
+> install.packages(c('ncdf4', 'fields', 'foreach', 'seas', 'abind'))
+> install.packages('https://cran.r-project.org/src/contrib/Archive/ClimDown/ClimDown_1.0.8.tar.gz')
+
+.. _several archived release tarballs: https://cran.r-project.org/src/contrib/Archive/ClimDown/
 
 If you are interested in a development version or a specific release
 of ClimDown, you can use the `devtools` package as an installation
@@ -85,7 +88,7 @@ alternative.::
     > install.packages('devtools')
     > devtools::install_github("pacificclimate/ClimDown", ref="release")
     # Or
-    > devtools::install_github("pacificclimate/ClimDown", ref="1.0.1")
+    > devtools::install_github("pacificclimate/ClimDown", ref="1.0.7")
 
 System dependencies
 -------------------
