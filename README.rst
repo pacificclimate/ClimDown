@@ -73,11 +73,11 @@ anywhere else in the world.
 Installation
 ============
 
-`ClimDown` is not currently available from CRAN via `> install.packages('ClimDown')`, but `several archived release tarballs`_ are. One can install these as such:
+`ClimDown` is not currently available from CRAN via `> install.packages('ClimDown')`, but `several archived release tarballs`_ are. One can install these as such::
 
-> install.packages('udunits2')
-> install.packages(c('ncdf4', 'fields', 'foreach', 'seas', 'abind'))
-> install.packages('https://cran.r-project.org/src/contrib/Archive/ClimDown/ClimDown_1.0.8.tar.gz')
+    > install.packages('udunits2')
+    > install.packages(c('ncdf4', 'fields', 'foreach', 'seas', 'abind'))
+    > install.packages('https://cran.r-project.org/src/contrib/Archive/ClimDown/ClimDown_1.0.8.tar.gz')
 
 .. _several archived release tarballs: https://cran.r-project.org/src/contrib/Archive/ClimDown/
 
