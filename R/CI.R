@@ -239,7 +239,6 @@ is.clim.file <- function(obs) {
 #' @param obs.file Filename of high-res gridded historical observations 
 #' (either daily data or monthly climatologies)
 #' @param output.file Filename to create (or overwrite) with the climate imprint outputs
-#' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
 #' @examples
 #' \dontrun{
