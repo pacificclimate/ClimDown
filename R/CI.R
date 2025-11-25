@@ -12,11 +12,24 @@ is.range.subset <- function(inner, outer) {
 }
 
 # O(n) time, O(n) space
-monthly.climatologies <- function(gcm, gcm.times) {
-    monthly.factor <- factor(format(gcm.times, '%m'))
-    rv <- apply(gcm, 1:2, function(x) {
-        tapply(x, monthly.factor, mean)
-    })
+monthly.climatologies <- function(gcm, gcm.times, varname) {
+    if (varname == 'pr') { # PRISM climatologies given as monthly total climatologies
+        # Calculate total precipitation by month for full baseline series
+        monthly.ts.factor <- factor(format(gcm.times, '%Y-%m'))
+        clim.mon.factor <- factor(format(as.Date(paste0(levels(monthly.ts.factor), '-01')), '%m'))
+        monthly.totals <- apply(gcm, 1:2, function(x, fac) {
+            tapply(x, fac, sum, na.rm=T)
+        }, monthly.ts.factor)
+        # Take average of monthly totals by calendar month
+        rv <- apply(monthly.totals, 2:3, function(x, fac) {
+            tapply(x, fac, mean, na.rm=T)
+        }, clim.mon.factor)
+    } else {
+        monthly.factor <- factor(format(gcm.times, '%m'))
+        rv <- apply(gcm, 1:2, function(x) {
+            tapply(x, monthly.factor, mean)
+        })
+    }
     aperm(rv, c(2, 3, 1))
 }
 
@@ -24,7 +37,7 @@ monthly.climatologies <- function(gcm, gcm.times) {
 daily.anomalies <- function(gcm, gcm.times, cal.start, cal.end, varname) {
     `%op%` <- ifelse (varname == 'pr', `/`, `-`)
     ti <- compute.time.overlap(gcm.times, cal.start, cal.end)
-    clima <- monthly.climatologies(gcm[,,ti], gcm.times[ti])
+    clima <- monthly.climatologies(gcm[,,ti], gcm.times[ti], varname)
     months <- as.integer(format(gcm.times, '%m'))
     array(
         mapply(
@@ -148,7 +161,8 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
                                            nt.per.chunk=100) {
     nt <- dim(gcm)[3]
     ncells <- length(gcm.lats) * length(gcm.lons)
-
+    print(output.nc$var[[varname]]$varsize)
+    print(c(length(obs.lons), length(obs.lats), dim(gcm)[3]))
     stopifnot(output.nc$var[[varname]]$varsize == c(length(obs.lons), length(obs.lats), dim(gcm)[3]))
     obs.grid <- xy.grid(obs.lats, obs.lons)
 
@@ -182,9 +196,9 @@ chunked.interpolate.gcm.to.obs <- function(gcm.lats, gcm.lons,
 }
 
 # FIXME: this name is duplicated from CA.R
-mk.output.ncdf <- function(file.name, varname, gcm.template, obs.template, global.attrs=list()) {
-    dims <- c(obs.template$var[[varname]]$dim[1:2], gcm.template$var[[varname]]$dim[3])
-    var <- ncvar_def(varname, getOption('target.units')[varname], dims, NA)
+mk.output.ncdf <- function(file.name, gcm.varname, obs.varname, gcm.template, obs.template, global.attrs=list()) {
+    dims <- c(obs.template$var[[obs.varname]]$dim[1:2], gcm.template$var[[gcm.varname]]$dim[3])
+    var <- ncvar_def(gcm.varname, getOption('target.units')[gcm.varname], dims, NA)
     nc <- nc_create(file.name, var)
     mapply(function(name, value) {
         ncatt_put(nc, varid=0, attname=name, attval=value)
@@ -201,7 +215,11 @@ nc_getx <- function(nc) {
 }
 
 nc_gety <- function(nc) {
-    ncvar_get(nc, 'lat')
+    sort(ncvar_get(nc, 'lat'))
+}
+
+is.clim.file <- function(obs) {
+    "climatology_bnds" %in% names(obs$var) | "climatology_bounds" %in% names(obs$var)
 }
 
 #' @title High-level NetCDF wrapper for Climate Imprint (CI)
@@ -210,16 +228,17 @@ nc_gety <- function(nc) {
 #' calculates daily climate anomalies from a given calibration period
 #' (default 1951-2005). These daily GCM anomalies are interpolated to
 #' the high-resolution observational grid. These interpolated daily
-#' anomalies constitute the "Climate Imprint". The high resolution
-#' gridded observations are then grouped into months and a climatology
+#' anomalies constitute the "Climate Imprint". If the high resolution
+#' gridded observations are daily observations instead of pre-computed
+#' monthly climatologies, they are then grouped into months and a climatology
 #' is calculated for each month. Finally the observed climatology is
 #' added to the GCM-based climate imprint and the final result is
 #' saved to output.file.
 #'
 #' @param gcm.file Filename of GCM simulations
-#' @param obs.file Filename of high-res gridded historical observations
+#' @param obs.file Filename of high-res gridded historical observations 
+#' (either daily data or monthly climatologies)
 #' @param output.file Filename to create (or overwrite) with the climate imprint outputs
-#' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #'
 #' @examples
 #' \dontrun{
@@ -232,19 +251,22 @@ nc_gety <- function(nc) {
 #'
 #' Ahmed, K. F., Wang, G., Silander, J., Wilson, A. M., Allen, J. M., Horton, R., & Anyah, R. (2013). Statistical downscaling and bias correction of climate model outputs for climate change impact assessment in the US northeast. Global and Planetary Change, 100, 320-332.
 #' @export
-ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax') {
+ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file) {
 
+    gcm.varname <- getOption('gcm.varname')
+    obs.varname <- getOption('obs.varname')
+    
     nc.gcm <- nc_open(gcm.file)
-    gcm <- CD_ncvar_get(nc.gcm, varname)
+    gcm <- CD_ncvar_get(nc.gcm, gcm.varname)
     gcm.lats <- nc_gety(nc.gcm)
     gcm.lons <- nc_getx(nc.gcm)
     gcm.times <- netcdf.calendar(nc.gcm)
-    
+
     print('Calculating daily anomalies on the GCM')
     cal <- attr(gcm.times, 'cal')
     cstart <- as.PCICt(getOption('calibration.start'), cal=cal)
     cend <- as.PCICt(getOption('calibration.end'), cal=cal)
-    anom <- daily.anomalies(gcm, gcm.times, cstart, cend, varname)
+    anom <- daily.anomalies(gcm, gcm.times, cstart, cend, gcm.varname)
 
     nc.obs <- nc_open(obs.file)
     obs.lats <- nc_gety(nc.obs)
@@ -255,17 +277,23 @@ ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax')
     nt.per.chunk <- optimal.chunk.size(length(obs.lats) * length(obs.lons), getOption('max.GB'))
 
     print('Creating cache file for the interpolated GCM')
-    output.nc <-mk.output.ncdf(output.file, varname, nc.gcm, nc.obs)
+    output.nc <-mk.output.ncdf(output.file, gcm.varname, obs.varname, nc.gcm, nc.obs)
     nc_close(nc.gcm)
- 
-    print('Interpolating the GCM daily anomalies to observation grid')
-    chunked.interpolate.gcm.to.obs(gcm.lats, gcm.lons, obs.lats, obs.lons, anom, output.nc, varname, nt.per.chunk)
 
-    print('Calculating the monthly factor across the observation time series')
-    monthly.factor <- factor(as.numeric(format(obs.times, '%m')))
-    
-    print('Calculating the monthly climatologies for the observations')
-    monthly.climatologies <- chunked.factored.running.mean(nc.obs, monthly.factor, varname, nt.per.chunk)
+    print('Interpolating the GCM daily anomalies to observation grid')
+    chunked.interpolate.gcm.to.obs(gcm.lats, gcm.lons, obs.lats, obs.lons, anom, output.nc, gcm.varname, nt.per.chunk)
+
+    print('Check observations file')
+    if (is.clim.file(nc.obs)) {
+        print('Reading the monthly climatologies from the observations')
+        monthly.climatologies <- ncvar_get(nc.obs, obs.varname)
+    } else {
+        print('Calculating the monthly factor across the observation time series')
+        monthly.factor <- factor(as.numeric(format(obs.times, '%m')))
+        
+        print('Calculating the monthly climatologies for the observations')
+        monthly.climatologies <- chunked.factored.running.mean(nc.obs, monthly.factor, obs.varname, nt.per.chunk)   
+    }
     
     nc_close(nc.obs)
 
@@ -273,7 +301,7 @@ ci.netcdf.wrapper <- function(gcm.file, obs.file, output.file, varname='tasmax')
     monthly.factor <- factor(as.numeric(format(gcm.times, '%m')))
 
     print('Adding the monthly climatologies to the interpolated GCM')
-    apply.climatologies.nc(output.nc, monthly.climatologies, monthly.factor, varname, nt.per.chunk)
+    apply.climatologies.nc(output.nc, monthly.climatologies, monthly.factor, gcm.varname, nt.per.chunk)
     nc_close(output.nc)
 }
 

@@ -47,7 +47,7 @@ bccaq.netcdf.wrapper <- function(gcm.file, obs.file, out.file, varname='tasmax')
     ptm <- proc.time()
 
     ci.file <- tempfile(fileext='.nc')
-    ci.netcdf.wrapper(gcm.file, obs.file, ci.file, varname)
+    ci.netcdf.wrapper(gcm.file, obs.file, ci.file)
     qdm.file <- tempfile(fileext='.nc')
     qdm.netcdf.wrapper(obs.file, ci.file, qdm.file, varname)
     unlink(ci.file)
