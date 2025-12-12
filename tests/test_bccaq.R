@@ -3,6 +3,8 @@
 test.bccaq <- function() {
     out.nc <- tempfile(fileext='.nc')
     options(
+        gcm.varname="tasmax",
+        obs.varname="tasmax",
         calibration.end=as.POSIXct('1972-12-31', tz='GMT'),
         cend=as.POSIXct('1972-12-31', tz='GMT')
     )

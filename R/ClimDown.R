@@ -17,12 +17,10 @@
 #' with Rscript.
 #'
 #' @name ClimDown
-#' @aliases ClimDown-package
-#' @docType package
 #' @references Werner, A. T., & Cannon, A. J. (2016). Hydrologic extremes  - an intercomparison of multiple gridded statistical downscaling methods. Hydrology and Earth System Sciences, 20(4), 1483-1508. doi: 10.5194/hess-20-1483-2016
 #' @keywords climate downscaling
 #' @import PCICt udunits2 ncdf4 fields foreach seas abind stats
-NULL
+"_PACKAGE"
 
 #' @title User-configurable options
 #'
@@ -111,9 +109,10 @@ NULL
 #' @examples
 #' \dontrun{
 #' library(doParallel)
-#' registerDoParallel(cores=4)
+#' registerDoParallel(cores = 4)
 #' bccaq.netcdf.wrapper(...)
-#' stopImplicitCluster()}
+#' stopImplicitCluster()
+#' }
 #'
 #' @seealso \pkg{doParallel} and \pkg{doMPI}
 #' @name parallelization

@@ -6,7 +6,7 @@
 # Input is a factor of which maps fine-scale obs cells to large-scale gcm cells
 # The factor should be of length x * y
 # and a 3d array of obs (x, y, time)
-aggregate.obs <- function(cell.factor, obs) {
+aggregate_obs <- function(cell.factor, obs) {
   trim <- getOption('trimmed.mean')
   apply(obs, 3, function(x) tapply(x, cell.factor, mean, trim=trim, na.rm=TRUE))
 }
@@ -14,12 +14,12 @@ aggregate.obs <- function(cell.factor, obs) {
 # Input cell indicies mapping obs grid to GCM grid
 # and a 3d array of obs (x, y, time)
 # Output is 3d array, gcmx x gcm y x time
-aggregate.obs.to.gcm.grid <- function(xi, yi, xn, yn, obs) {
+aggregate_obs_to_gcm_grid <- function(xi, yi, xn, yn, obs) {
   cell.number <- xi * max(yi) + yi
   cell.factor <- factor(cell.number, unique(as.vector(cell.number)))
   # apply preserving time (dim 3)
   # so for each time step, aggregate (take the mean) according to the cell map
-  rv <- aggregate.obs(cell.factor, obs)
+  rv <- aggregate_obs(cell.factor, obs)
   ti <- dim(obs)[3]
   dim(rv) <- c(xn, yn, ti)
   return(rv)
@@ -56,7 +56,7 @@ create.aggregates <- function(obs.file, gcm.file, varid) {
     print(paste("Aggregating timesteps", i['start'], "-", i['stop'], "/", length(obs.time)))
     obs <- CD_ncvar_get(nc.obs, varid=varid, start=c(1, 1, i['start']), # get obs for one chunk
                      count=c(-1, -1, i['length']))
-    agg <- aggregate.obs.to.gcm.grid(xi, yi, xn, yn, obs)
+    agg <- aggregate_obs_to_gcm_grid(xi, yi, xn, yn, obs)
     aggregates[min(xi):max(xi), min(yi):max(yi), i['start']:i['stop']] <- agg
     rm(obs)
     gc()

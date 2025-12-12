@@ -1,9 +1,11 @@
 .setUp <- function() {
     options(
+        gcm.varname="tasmax",
+        obs.varname="tasmax",
         calibration.end=as.POSIXct('1972-12-31', tz='GMT')
     )
     ci.file <- tempfile(fileext='.nc')
-    ClimDown::ci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', ci.file, 'tasmax')
+    ClimDown::ci.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc', ci.file)
     qdm.file <<- tempfile(fileext='.nc')
     ClimDown::qdm.netcdf.wrapper('./tiny_obs.nc', ci.file, qdm.file, 'tasmax')
     unlink(ci.file)
